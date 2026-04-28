@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>12</LangVersion>
+    <AssemblyName>AIVoiceBridge.Plugin.CeVIOAI</AssemblyName>
+    <RootNamespace>AIVoiceBridge.Plugin.CeVIOAI</RootNamespace>
+    <AppPluginsDir>$(MSBuildThisFileDirectory)..\..\..\plugins\</AppPluginsDir>
+    <DefaultItemExcludes>$(DefaultItemExcludes);lib\**</DefaultItemExcludes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\AIVoiceBridge.Core\AIVoiceBridge.Core.csproj"
+                      Private="false" ExcludeAssets="runtime"/>
+  </ItemGroup>
+
+  <Target Name="CopyToPlugins" AfterTargets="Build">
+    <MakeDir Directories="$(AppPluginsDir)" Condition="!Exists('$(AppPluginsDir)')"/>
+    <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll"
+          DestinationFolder="$(AppPluginsDir)"
+          SkipUnchangedFiles="true"/>
+  </Target>
+
+</Project>

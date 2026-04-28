@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>AIVoiceBridge.CeVIOBridge</AssemblyName>
+    <RootNamespace>AIVoiceBridge.CeVIOBridge</RootNamespace>
+    <Nullable>enable</Nullable>
+    <LangVersion>12</LangVersion>
+    <AppPluginsDir>$(MSBuildThisFileDirectory)..\..\plugins\</AppPluginsDir>
+  </PropertyGroup>
+
+  <!--
+    CeVIO.Talk.RemoteService2.dll は CeVIO AI インストールフォルダに存在し、
+    このブリッジは .NET Framework 4.8 で動作するため System.Runtime.Remoting が使用可能。
+    実DLL: src\Plugins\AIVoiceBridge.Plugin.CeVIOAI\lib\ に配置済みのものを参照。
+  -->
+  <PropertyGroup>
+    <CeVIOApiDll>$(MSBuildThisFileDirectory)..\Plugins\AIVoiceBridge.Plugin.CeVIOAI\lib\CeVIO.Talk.RemoteService2.dll</CeVIOApiDll>
+    <UseRealApi Condition="Exists('$(CeVIOApiDll)')">true</UseRealApi>
+    <UseRealApi Condition="!Exists('$(CeVIOApiDll)')">false</UseRealApi>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(UseRealApi)' == 'true'">
+    <Reference Include="CeVIO.Talk.RemoteService2">
+      <HintPath>$(CeVIOApiDll)</HintPath>
+      <!-- plugins フォルダに既に存在するためコピー不要 -->
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(UseRealApi)' == 'true'">
+    <DefineConstants>$(DefineConstants);USE_REAL_CEVIO_API</DefineConstants>
+  </PropertyGroup>
+
+  <Target Name="CopyToPlugins" AfterTargets="Build">
+    <MakeDir Directories="$(AppPluginsDir)" Condition="!Exists('$(AppPluginsDir)')"/>
+    <Copy SourceFiles="$(OutputPath)$(AssemblyName).exe"
+          DestinationFolder="$(AppPluginsDir)"
+          SkipUnchangedFiles="true"/>
+    <Copy SourceFiles="$(OutputPath)$(AssemblyName).exe.config"
+          DestinationFolder="$(AppPluginsDir)"
+          Condition="Exists('$(OutputPath)$(AssemblyName).exe.config')"
+          SkipUnchangedFiles="true"/>
+  </Target>
+
+</Project>

@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>12</LangVersion>
+    <AssemblyName>AIVoiceBridge.Plugin.AIVoice2</AssemblyName>
+    <RootNamespace>AIVoiceBridge.Plugin.AIVoice2</RootNamespace>
+    <AppPluginsDir>$(MSBuildThisFileDirectory)..\..\..\plugins\</AppPluginsDir>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\AIVoiceBridge.Core\AIVoiceBridge.Core.csproj"
+                      Private="false" ExcludeAssets="runtime"/>
+  </ItemGroup>
+
+  <!-- NAudio: 再生完了の検出と無音検出のため -->
+  <ItemGroup>
+    <PackageReference Include="NAudio" Version="2.2.1"/>
+  </ItemGroup>
+
+  <Target Name="CopyToPlugins" AfterTargets="Build">
+    <MakeDir Directories="$(AppPluginsDir)" Condition="!Exists('$(AppPluginsDir)')"/>
+    <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll"
+          DestinationFolder="$(AppPluginsDir)"
+          SkipUnchangedFiles="true"/>
+  </Target>
+
+</Project>

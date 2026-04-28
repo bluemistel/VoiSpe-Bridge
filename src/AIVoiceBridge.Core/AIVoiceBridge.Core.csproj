@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>12</LangVersion>
+    <AssemblyName>AIVoiceBridge.Core</AssemblyName>
+    <RootNamespace>AIVoiceBridge.Core</RootNamespace>
+  </PropertyGroup>
+
+</Project>

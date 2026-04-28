@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>12</LangVersion>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>AIVoiceBridge</AssemblyName>
+    <RootNamespace>AIVoiceBridge.App</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AIVoiceBridge.Core\AIVoiceBridge.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 高精度日本語音声認識（ローカル実行、初回モデルダウンロードあり） -->
+    <PackageReference Include="Whisper.net" Version="1.9.0" />
+    <PackageReference Include="Whisper.net.Runtime" Version="1.9.0" />
+    <!-- GPU アクセラレーション（CUDA: NVIDIA、Vulkan: AMD/Intel/NVIDIA 共通） -->
+    <PackageReference Include="Whisper.net.Runtime.Cuda" Version="1.9.0" />
+    <PackageReference Include="Whisper.net.Runtime.Vulkan" Version="1.9.0" />
+    <!-- マイク入力・音声出力デバイス選択 -->
+    <PackageReference Include="NAudio" Version="2.2.1" />
+    <!-- MVVMヘルパー -->
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
+  </ItemGroup>
+
+  <Target Name="CreatePluginsFolder" AfterTargets="Build">
+    <MakeDir Directories="$(OutputPath)plugins" />
+  </Target>
+
+</Project>

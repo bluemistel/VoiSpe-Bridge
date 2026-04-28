@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>12</LangVersion>
+    <AssemblyName>AIVoiceBridge.Plugin.AIVoice</AssemblyName>
+    <RootNamespace>AIVoiceBridge.Plugin.AIVoice</RootNamespace>
+    <AppPluginsDir>$(MSBuildThisFileDirectory)..\..\..\plugins\</AppPluginsDir>
+    <DefaultItemExcludes>$(DefaultItemExcludes);lib\**</DefaultItemExcludes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\AIVoiceBridge.Core\AIVoiceBridge.Core.csproj"
+                      Private="false" ExcludeAssets="runtime"/>
+  </ItemGroup>
+
+  <!--
+    実DLLの場所: C:\Program Files\AI\AIVoice\AIVoiceEditor\AI.Talk.Editor.Api.dll
+    lib\ にコピーするか、下の HintPath を直接参照するよう変更してください。
+  -->
+  <PropertyGroup>
+    <UseRealApi Condition="Exists('lib\AI.Talk.Editor.Api.dll')">true</UseRealApi>
+    <UseRealApi Condition="!Exists('lib\AI.Talk.Editor.Api.dll')">false</UseRealApi>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(UseRealApi)' == 'true'">
+    <Reference Include="AI.Talk.Editor.Api">
+      <HintPath>lib\AI.Talk.Editor.Api.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(UseRealApi)' == 'false'">
+    <Compile Include="lib\AI.Talk.Editor.Api.Stub.cs"/>
+  </ItemGroup>
+
+  <Target Name="CopyToPlugins" AfterTargets="Build">
+    <MakeDir Directories="$(AppPluginsDir)" Condition="!Exists('$(AppPluginsDir)')"/>
+    <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll"
+          DestinationFolder="$(AppPluginsDir)"
+          SkipUnchangedFiles="true"/>
+    <Copy SourceFiles="$(OutputPath)AI.Talk.Editor.Api.dll"
+          DestinationFolder="$(AppPluginsDir)"
+          Condition="Exists('$(OutputPath)AI.Talk.Editor.Api.dll')"
+          SkipUnchangedFiles="true"/>
+  </Target>
+
+</Project>

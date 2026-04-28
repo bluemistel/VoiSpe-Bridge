@@ -1,0 +1,29 @@
+# Build outputs
+**/bin/
+**/obj/
+dist/
+/plugins/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Proprietary DLLs (must be copied from each software's installation folder)
+src/Plugins/AIVoiceBridge.Plugin.AIVoice/lib/AI.Talk.Editor.Api.dll
+src/Plugins/AIVoiceBridge.Plugin.CeVIOAI/lib/CeVIO.Talk.RemoteService2.dll
+
+# Whisper models (downloaded at first run, ~500MB)
+# %APPDATA%\AIVoiceBridge\models\ は自動ダウンロードされるためコミット不要
+
+# User settings (machine-specific)
+**/appsettings.local.json

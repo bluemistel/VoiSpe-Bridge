@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet build *)",
+      "Bash(powershell.exe -Command \"Get-Process aivoice -ErrorAction SilentlyContinue | Select-Object Name,Id,Path\")",
+      "Bash(dotnet search *)",
+      "Bash(dotnet package *)",
+      "Bash(powershell -Command \"Get-ChildItem -Recurse 'C:\\\\Users\\\\skki7\\\\.nuget\\\\packages\\\\whisper.net\\\\1.9.0' -Filter '*.dll' | Select-Object -ExpandProperty FullName\")",
+      "Bash(powershell -Command ' *)",
+      "Bash(taskkill /PID 37420 /F)",
+      "Bash(powershell -Command \"Stop-Process -Id 37420 -Force -ErrorAction SilentlyContinue; Start-Sleep 1\")",
+      "Bash(powershell -Command 'Get-ChildItem '\\\\''C:\\\\Users\\\\skki7\\\\.nuget\\\\packages\\\\whisper.net.runtime\\\\1.9.0'\\\\'' -Recurse | Where-Object { -not $_.PSIsContainer } | Select-Object -ExpandProperty FullName | head -30')",
+      "Bash(Stop-Process -Id 44464 -Force)",
+      "Bash(Stop-Process -Id 2880 -Force)",
+      "Bash(Get-Process -Name \"AIVoiceBridge\" -ErrorAction SilentlyContinue)",
+      "Bash(Stop-Process -Force)",
+      "Bash(taskkill /F /IM AIVoiceBridge.exe)",
+      "Bash(taskkill /F /IM \"AIVoiceBridge.exe\")",
+      "Bash(cmd /c \"tasklist | findstr AIVoice\")",
+      "Bash(wmic process *)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.nuget.org)",
+      "WebSearch",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(dotnet restore *)",
+      "WebFetch(domain:www.ah-soft.com)",
+      "WebFetch(domain:wiki.novoyuuparosk.org)",
+      "WebFetch(domain:vocaverse.network)",
+      "WebFetch(domain:cevio.jp)",
+      "Bash(rm -f System.ServiceModel.*.dll System.Private.ServiceModel.dll Microsoft.Extensions.ObjectPool.dll System.Security.Cryptography.Pkcs.dll System.Security.Cryptography.Xml.dll)",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git check-ignore *)"
+    ]
+  }
+}
