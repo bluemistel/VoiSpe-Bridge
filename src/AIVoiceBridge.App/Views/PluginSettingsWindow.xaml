@@ -1,0 +1,197 @@
+<Window x:Class="AIVoiceBridge.App.Views.PluginSettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:conv="clr-namespace:AIVoiceBridge.App.Converters"
+        Title="音声合成設定"
+        Width="340" SizeToContent="Height"
+        MinWidth="300"
+        Background="{StaticResource BackgroundBrush}"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize">
+
+  <Window.Resources>
+    <Style x:Key="SectionLabel" TargetType="TextBlock">
+      <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+      <Setter Property="FontSize" Value="10"/>
+      <Setter Property="Margin" Value="0,0,0,3"/>
+    </Style>
+    <Style x:Key="Card" TargetType="Border">
+      <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+      <Setter Property="CornerRadius" Value="8"/>
+      <Setter Property="Padding" Value="12"/>
+      <Setter Property="Margin" Value="0,0,0,8"/>
+    </Style>
+    <Style x:Key="SliderValue" TargetType="TextBlock">
+      <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="Width" Value="38"/>
+      <Setter Property="TextAlignment" Value="Right"/>
+    </Style>
+  </Window.Resources>
+
+  <StackPanel Margin="14,12,14,14">
+
+    <!-- プラグイン・キャスト -->
+    <Border Style="{StaticResource Card}">
+      <StackPanel>
+        <TextBlock Text="プラグイン・キャスト"
+                   FontSize="12" FontWeight="SemiBold" Margin="0,0,0,10"/>
+
+        <TextBlock Style="{StaticResource SectionLabel}" Text="プラグイン"/>
+        <ComboBox ItemsSource="{Binding AvailablePlugins}"
+                  SelectedItem="{Binding SelectedPlugin}"
+                  DisplayMemberPath="Name"
+                  Margin="0,0,0,8"/>
+
+        <TextBlock Style="{StaticResource SectionLabel}" Text="キャスト（ボイス）"/>
+        <ComboBox ItemsSource="{Binding AvailableCasts}"
+                  SelectedItem="{Binding SelectedCast}"
+                  IsEnabled="{Binding IsCastSelectable}"
+                  DisplayMemberPath="Name"/>
+        <TextBlock Margin="0,4,0,0"
+                   Foreground="{StaticResource TextSecondaryBrush}"
+                   FontSize="10" TextWrapping="Wrap"
+                   Visibility="{Binding IsCastSelectable,
+                     Converter={StaticResource InverseVis}}">
+          A.I.VOICE2 はキャストをAPI経由で取得できません。
+          A.I.VOICE2 Editor 側で選択中のキャストが使用されます。
+        </TextBlock>
+      </StackPanel>
+    </Border>
+
+    <!-- 接続設定（IPluginWithConnectionSettings 実装プラグイン向け・動的表示） -->
+    <Border Style="{StaticResource Card}"
+            Visibility="{Binding HasPluginConnectionSettings,
+                         Converter={StaticResource BoolToVis}}">
+      <StackPanel>
+        <TextBlock Text="接続設定"
+                   FontSize="12" FontWeight="SemiBold" Margin="0,0,0,10"/>
+
+        <ItemsControl ItemsSource="{Binding PluginConnectionSettings}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <StackPanel Margin="0,0,0,8">
+                <TextBlock Style="{StaticResource SectionLabel}" Text="{Binding Label}"/>
+                <!-- 通常テキスト -->
+                <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
+                         Visibility="{Binding IsPassword,
+                                      Converter={StaticResource InverseVis}}"/>
+                <!-- パスワードフィールド（IsPassword=true）: PasswordBox で * マスク表示 -->
+                <PasswordBox conv:PasswordBoxHelper.BoundPassword="{Binding Value, Mode=TwoWay,
+                                                  UpdateSourceTrigger=PropertyChanged}"
+                             Visibility="{Binding IsPassword,
+                                          Converter={StaticResource BoolToVis}}"/>
+              </StackPanel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
+                   FontSize="10" TextWrapping="Wrap" Margin="0,4,0,10">
+          VoisonaTalk の 設定 &gt; API タブで REST API を有効化し、
+          メールアドレスと API パスワードを設定してください。
+        </TextBlock>
+
+        <Button Content="再接続"
+                Command="{Binding ReconnectPluginCommand}"
+                HorizontalAlignment="Right"
+                Style="{StaticResource PrimaryButton}"
+                Padding="16,5" FontSize="12"/>
+      </StackPanel>
+    </Border>
+
+    <!-- 音声パラメータ -->
+    <Border Style="{StaticResource Card}">
+      <StackPanel>
+        <TextBlock Text="音声パラメータ"
+                   FontSize="12" FontWeight="SemiBold" Margin="0,0,0,10"/>
+
+        <Grid Margin="0,0,0,2">
+          <TextBlock Style="{StaticResource SectionLabel}" Text="話速"/>
+          <TextBlock HorizontalAlignment="Right" Style="{StaticResource SliderValue}"
+                     Text="{Binding Speed, StringFormat=F2}"/>
+        </Grid>
+        <Slider Minimum="0.5" Maximum="2.0" Value="{Binding Speed}"
+                TickFrequency="0.1" IsSnapToTickEnabled="True" Margin="0,0,0,8"/>
+
+        <Grid Margin="0,0,0,2">
+          <TextBlock Style="{StaticResource SectionLabel}" Text="音量"/>
+          <TextBlock HorizontalAlignment="Right" Style="{StaticResource SliderValue}"
+                     Text="{Binding Volume, StringFormat=F2}"/>
+        </Grid>
+        <Slider Minimum="0.0" Maximum="2.0" Value="{Binding Volume}"
+                TickFrequency="0.1" IsSnapToTickEnabled="True" Margin="0,0,0,8"/>
+
+        <Grid Margin="0,0,0,2">
+          <TextBlock Style="{StaticResource SectionLabel}" Text="ピッチ"/>
+          <TextBlock HorizontalAlignment="Right" Style="{StaticResource SliderValue}"
+                     Text="{Binding Pitch, StringFormat=F2}"/>
+        </Grid>
+        <Slider Minimum="0.5" Maximum="2.0" Value="{Binding Pitch}"
+                TickFrequency="0.1" IsSnapToTickEnabled="True" Margin="0,0,0,8"/>
+
+        <Grid Margin="0,0,0,2">
+          <TextBlock Style="{StaticResource SectionLabel}" Text="抑揚"/>
+          <TextBlock HorizontalAlignment="Right" Style="{StaticResource SliderValue}"
+                     Text="{Binding Intonation, StringFormat=F2}"/>
+        </Grid>
+        <Slider Minimum="0.0" Maximum="2.0" Value="{Binding Intonation}"
+                TickFrequency="0.1" IsSnapToTickEnabled="True"/>
+
+      </StackPanel>
+    </Border>
+
+    <!-- 感情・スタイル（IPluginWithEmotions 実装プラグイン向け・動的表示） -->
+    <Border Style="{StaticResource Card}"
+            Visibility="{Binding HasEmotionParameters,
+                         Converter={StaticResource BoolToVis}}">
+      <StackPanel>
+        <TextBlock Text="感情・スタイル"
+                   FontSize="12" FontWeight="SemiBold" Margin="0,0,0,10"/>
+
+        <ItemsControl ItemsSource="{Binding EmotionParameters}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <StackPanel Margin="0,0,0,8">
+                <Grid Margin="0,0,0,2">
+                  <TextBlock Style="{StaticResource SectionLabel}" Text="{Binding Label}"/>
+                  <TextBlock HorizontalAlignment="Right" Style="{StaticResource SliderValue}"
+                             Text="{Binding Value, StringFormat=F0}"/>
+                </Grid>
+                <Slider Minimum="{Binding Min}" Maximum="{Binding Max}"
+                        Value="{Binding Value}"
+                        TickFrequency="1" IsSnapToTickEnabled="True"/>
+              </StackPanel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </Border>
+
+    <!-- 出力デバイス -->
+    <Border Style="{StaticResource Card}">
+      <StackPanel>
+        <TextBlock Text="音声出力 / OBS連携"
+                   FontSize="12" FontWeight="SemiBold" Margin="0,0,0,10"/>
+        <TextBlock Style="{StaticResource SectionLabel}" Text="出力デバイス"/>
+        <ComboBox ItemsSource="{Binding OutputDevices}"
+                  SelectedItem="{Binding SelectedOutputDevice}"
+                  DisplayMemberPath="Name"
+                  Margin="0,0,0,6"/>
+        <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
+                   FontSize="10" TextWrapping="Wrap">
+          VB-Cable 等の仮想デバイスを選択し、OBS の「音声入力キャプチャ」で
+          同じデバイスを指定すると合成音声を取り込めます。
+        </TextBlock>
+      </StackPanel>
+    </Border>
+
+    <!-- 閉じるボタン -->
+    <Button Content="閉じる" Click="Close_Click"
+            HorizontalAlignment="Right"
+            Style="{StaticResource PrimaryButton}"
+            Background="{StaticResource BorderBrush}"
+            Padding="20,7" FontSize="13" FontWeight="Normal"/>
+  </StackPanel>
+</Window>

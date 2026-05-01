@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>AIVoiceBridge.AIVoice1Bridge</AssemblyName>
+    <RootNamespace>AIVoiceBridge.AIVoice1Bridge</RootNamespace>
+    <Nullable>enable</Nullable>
+    <LangVersion>12</LangVersion>
+    <AppPluginsDir>$(MSBuildThisFileDirectory)..\..\plugins\</AppPluginsDir>
+  </PropertyGroup>
+
+  <!--
+    AI.Talk.Editor.Api.dll は A.I.VOICE v1 の Editor API。
+    System.ServiceModel (WCF) に依存するため .NET Framework 4.8 でのみ動作する。
+    実DLL: src\Plugins\AIVoiceBridge.Plugin.AIVoice\lib\ に配置済みのものを参照。
+  -->
+  <PropertyGroup>
+    <AIVoiceApiDll>$(MSBuildThisFileDirectory)..\Plugins\AIVoiceBridge.Plugin.AIVoice\lib\AI.Talk.Editor.Api.dll</AIVoiceApiDll>
+    <UseRealApi Condition="Exists('$(AIVoiceApiDll)')">true</UseRealApi>
+    <UseRealApi Condition="!Exists('$(AIVoiceApiDll)')">false</UseRealApi>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(UseRealApi)' == 'true'">
+    <Reference Include="AI.Talk.Editor.Api">
+      <HintPath>$(AIVoiceApiDll)</HintPath>
+      <!-- plugins フォルダには Plugin.AIVoice.csproj 側でコピー済み -->
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(UseRealApi)' == 'true'">
+    <DefineConstants>$(DefineConstants);USE_REAL_AIVOICE_API</DefineConstants>
+  </PropertyGroup>
+
+  <Target Name="CopyToPlugins" AfterTargets="Build">
+    <MakeDir Directories="$(AppPluginsDir)" Condition="!Exists('$(AppPluginsDir)')"/>
+    <Copy SourceFiles="$(OutputPath)$(AssemblyName).exe"
+          DestinationFolder="$(AppPluginsDir)"
+          SkipUnchangedFiles="true"/>
+    <Copy SourceFiles="$(OutputPath)$(AssemblyName).exe.config"
+          DestinationFolder="$(AppPluginsDir)"
+          Condition="Exists('$(OutputPath)$(AssemblyName).exe.config')"
+          SkipUnchangedFiles="true"/>
+  </Target>
+
+</Project>

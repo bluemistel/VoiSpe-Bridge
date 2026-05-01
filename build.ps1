@@ -79,8 +79,49 @@ if ($LASTEXITCODE -ne 0) {
     $lines | Set-Content -Encoding UTF8 (Join-Path $dst "README_SETUP.txt")
 }
 
-# ---- [4] CeVIO AI bridge + plugin -------------------------------
-Write-Host "`n[4/6] Building CeVIO AI bridge (.NET 4.8)..."
+# ---- [4] A.I.VOICE v1 bridge + plugin --------------------------
+Write-Host "`n[4/8] Building A.I.VOICE v1 bridge (.NET 4.8)..."
+$av1BridgeProj = "src\AIVoice1Bridge\AIVoiceBridge.AIVoice1Bridge.csproj"
+$av1BridgeOk = $true
+dotnet build $av1BridgeProj -c $Configuration
+if ($LASTEXITCODE -ne 0) {
+    Write-Warning "A.I.VOICE v1 bridge build failed (skipped)"
+    $av1BridgeOk = $false
+}
+
+Write-Host "`n[5/8] Building A.I.VOICE v1 plugin..."
+$av1Proj = "src\Plugins\AIVoiceBridge.Plugin.AIVoice\AIVoiceBridge.Plugin.AIVoice.csproj"
+dotnet build $av1Proj -c $Configuration
+if ($LASTEXITCODE -ne 0) {
+    Write-Warning "A.I.VOICE v1 plugin build failed (skipped)"
+} else {
+    $dst = Join-Path $distPlugins "AIVoice"
+    New-Item -ItemType Directory -Path $dst | Out-Null
+    Copy-Item (Join-Path $root "plugins\AIVoiceBridge.Plugin.AIVoice.dll") $dst
+    Copy-Item (Join-Path $root "plugins\AI.Talk.Editor.Api.dll")           $dst -ErrorAction SilentlyContinue
+    if ($av1BridgeOk) {
+        Copy-Item (Join-Path $root "plugins\AIVoiceBridge.AIVoice1Bridge.exe")        $dst
+        Copy-Item (Join-Path $root "plugins\AIVoiceBridge.AIVoice1Bridge.exe.config") $dst
+    }
+    $lines = @(
+        "[A.I.VOICE (v1) Plugin Setup]",
+        "Place the contents of this folder into the plugins\ folder next to AIVoiceBridge.exe.",
+        "",
+        "Included files:",
+        "  AIVoiceBridge.Plugin.AIVoice.dll  - plugin",
+        "  AIVoiceBridge.AIVoice1Bridge.exe  - .NET 4.8 bridge process",
+        "  AI.Talk.Editor.Api.dll            - A.I.VOICE v1 Editor API",
+        "",
+        "Requirements:",
+        "  - A.I.VOICE v1 must be installed",
+        "  - .NET Framework 4.8 required (included in Windows 10/11)",
+        "  - A.I.VOICE Editor can be started automatically from the bridge"
+    )
+    $lines | Set-Content -Encoding UTF8 (Join-Path $dst "README_SETUP.txt")
+}
+
+# ---- [6] CeVIO AI bridge + plugin -------------------------------
+Write-Host "`n[6/8] Building CeVIO AI bridge (.NET 4.8)..."
 $bridgeProj = "src\CeVIOBridge\AIVoiceBridge.CeVIOBridge.csproj"
 $bridgeOk = $true
 dotnet build $bridgeProj -c $Configuration
@@ -89,7 +130,7 @@ if ($LASTEXITCODE -ne 0) {
     $bridgeOk = $false
 }
 
-Write-Host "`n[5/6] Building CeVIO AI plugin..."
+Write-Host "`n[7/8] Building CeVIO AI plugin..."
 $cevioProj = "src\Plugins\AIVoiceBridge.Plugin.CeVIOAI\AIVoiceBridge.Plugin.CeVIOAI.csproj"
 dotnet build $cevioProj -c $Configuration
 if ($LASTEXITCODE -ne 0) {
@@ -120,9 +161,35 @@ if ($LASTEXITCODE -ne 0) {
     $lines | Set-Content -Encoding UTF8 (Join-Path $dst "README_SETUP.txt")
 }
 
-# ---- [6] ZIP packages -------------------------------------------
+# ---- [8] VoisonaTalk plugin ------------------------------------
+Write-Host "`n[8/9] Building VoisonaTalk plugin..."
+$voisonaProj = "src\Plugins\AIVoiceBridge.Plugin.VoisonaTalk\AIVoiceBridge.Plugin.VoisonaTalk.csproj"
+dotnet build $voisonaProj -c $Configuration
+if ($LASTEXITCODE -ne 0) {
+    Write-Warning "VoisonaTalk plugin build failed (skipped)"
+} else {
+    $dst = Join-Path $distPlugins "VoisonaTalk"
+    New-Item -ItemType Directory -Path $dst | Out-Null
+    Copy-Item (Join-Path $root "plugins\AIVoiceBridge.Plugin.VoisonaTalk.dll") $dst
+    $lines = @(
+        "[VoisonaTalk Plugin Setup]",
+        "Place the contents of this folder into the plugins\ folder next to AIVoiceBridge.exe.",
+        "",
+        "No additional DLLs required.",
+        "",
+        "Requirements:",
+        "  - VoisonaTalk が起動していること",
+        "  - VoisonaTalk の 設定 > API タブで REST API を有効化していること",
+        "  - アプリ内「音声合成設定 > 接続設定」でメールアドレスと API パスワードを入力し「再接続」を押すこと",
+        "",
+        "Default port: 32766 (VoisonaTalk のデフォルト値)"
+    )
+    $lines | Set-Content -Encoding UTF8 (Join-Path $dst "README_SETUP.txt")
+}
+
+# ---- [9] ZIP packages -------------------------------------------
 if (-not $SkipZip) {
-    Write-Host "`n[6/6] Creating ZIP packages..."
+    Write-Host "`n[9/9] Creating ZIP packages..."
 
     $version    = "1.0.0"
     $appZip     = Join-Path $root "dist\AIVoiceBridge-v$version.zip"

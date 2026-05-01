@@ -30,7 +30,14 @@
       "Bash(rm -f System.ServiceModel.*.dll System.Private.ServiceModel.dll Microsoft.Extensions.ObjectPool.dll System.Security.Cryptography.Pkcs.dll System.Security.Cryptography.Xml.dll)",
       "Bash(git init *)",
       "Bash(git add *)",
-      "Bash(git check-ignore *)"
+      "Bash(git check-ignore *)",
+      "Bash(git config *)",
+      "Bash(git commit -m ' *)",
+      "Bash(gh repo *)",
+      "Bash(where gh *)",
+      "Bash(where.exe gh *)",
+      "Bash(powershell.exe -Command \"Stop-Process -Id 42516 -Force -ErrorAction SilentlyContinue; Start-Sleep -Milliseconds 500\")",
+      "WebFetch(domain:manual.voisona.com)"
     ]
   }
 }

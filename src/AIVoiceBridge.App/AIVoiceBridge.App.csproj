@@ -32,4 +32,30 @@
     <MakeDir Directories="$(OutputPath)plugins" />
   </Target>
 
+  <!--
+    root の plugins/ フォルダ（各プラグイン・ブリッジの CopyToPlugins ターゲットが出力）を
+    App の出力ディレクトリの plugins/ に同期する。
+    これにより dotnet build AIVoiceBridge.App.csproj だけで最新プラグインが使われる。
+  -->
+  <PropertyGroup>
+    <RootPluginsDir>$(MSBuildThisFileDirectory)..\..\plugins\</RootPluginsDir>
+  </PropertyGroup>
+
+  <!-- 通常ビルド: bin\Debug|Release\... へ同期 -->
+  <Target Name="SyncPluginsToOutput" AfterTargets="CreatePluginsFolder" Condition="Exists('$(RootPluginsDir)')">
+    <ItemGroup>
+      <_PluginFiles Include="$(RootPluginsDir)*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_PluginFiles)" DestinationFolder="$(OutputPath)plugins" SkipUnchangedFiles="true" />
+  </Target>
+
+  <!-- dotnet publish: $(PublishDir) へ同期 -->
+  <Target Name="SyncPluginsToPublish" AfterTargets="Publish" Condition="Exists('$(RootPluginsDir)') And '$(PublishDir)' != ''">
+    <MakeDir Directories="$(PublishDir)plugins" />
+    <ItemGroup>
+      <_PluginFilesForPublish Include="$(RootPluginsDir)*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_PluginFilesForPublish)" DestinationFolder="$(PublishDir)plugins" SkipUnchangedFiles="true" />
+  </Target>
+
 </Project>

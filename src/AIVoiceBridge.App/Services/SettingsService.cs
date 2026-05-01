@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 
@@ -10,13 +11,19 @@ public sealed class AppSettings
     public double VoiceTriggerDb { get; set; } = -35.0;
     public double NoiseGateDb { get; set; } = -50.0;
     public int SilenceDurationMs { get; set; } = 800;
-    public string SelectedModelName { get; set; } = "Small";
+    public string SelectedModelName { get; set; } = "LargeV3Turbo";
     public double Speed { get; set; } = 1.0;
     public double Volume { get; set; } = 1.0;
     public double Pitch { get; set; } = 1.0;
     public double Intonation { get; set; } = 1.0;
     public string? SelectedOutputDeviceName { get; set; }
     public bool UseGpu { get; set; } = true;
+
+    /// <summary>
+    /// プラグイン固有の接続設定。キー: プラグイン名 → (設定キー → 値)。
+    /// IPluginWithConnectionSettings を実装するプラグインの設定を永続化する。
+    /// </summary>
+    public Dictionary<string, Dictionary<string, string>> PluginConnectionSettings { get; set; } = [];
 }
 
 public sealed class SettingsService

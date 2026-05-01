@@ -19,7 +19,7 @@ static class Program
         Console.OutputEncoding = Encoding.UTF8;
 
         if (args.Length == 0)
-            return Error("引数が必要です。--list-casts または --speak");
+            return Error("引数が必要です。--list-casts / --list-emotions / --speak");
 
 #if !USE_REAL_CEVIO_API
         return Error("CeVIO.Talk.RemoteService2.dll が見つかりません。" +
@@ -27,9 +27,10 @@ static class Program
 #else
         return args[0] switch
         {
-            "--list-casts" => ListCasts(),
-            "--speak"      => Speak(args),
-            _              => Error($"不明なコマンド: {args[0]}")
+            "--list-casts"    => ListCasts(),
+            "--list-emotions" => ListEmotions(args),
+            "--speak"         => Speak(args),
+            _                 => Error($"不明なコマンド: {args[0]}")
         };
 #endif
     }
@@ -48,7 +49,35 @@ static class Program
         return 0;
     }
 
-    // --speak <textfile> <wavfile> <cast> <speed> <tone> <volume> <tonescale>
+    // --list-emotions <cast>
+    // 出力フォーマット（タブ区切り、1行1感情）:
+    //   感情名\t現在値(0-100)
+    static int ListEmotions(string[] args)
+    {
+        if (args.Length < 2)
+            return Error("--list-emotions の引数が不足しています。Usage: --list-emotions <cast>");
+
+        var cast = args[1];
+        if (!EnsureHostStarted(out var errorCode)) return errorCode;
+
+        var talker = new Talker2 { Cast = cast };
+
+        var components = talker.Components;
+        if (components == null || components.Count == 0)
+        {
+            // 感情なし（正常終了でリストなし）
+            return 0;
+        }
+
+        for (int i = 0; i < components.Count; i++)
+        {
+            var comp = components[i];
+            Console.WriteLine($"{comp.Name}\t{comp.Value}");
+        }
+        return 0;
+    }
+
+    // --speak <textfile> <wavfile> <cast> <speed> <tone> <volume> <tonescale> [EmotionName=Value ...]
     static int Speak(string[] args)
     {
         if (args.Length < 8)
@@ -79,6 +108,27 @@ static class Program
             Volume    = volume,
             ToneScale = toneScale,
         };
+
+        // 感情引数を適用（インデックス 8 以降: "EmotionName=Value"）
+        if (args.Length > 8 && talker.Components != null)
+        {
+            for (int i = 8; i < args.Length; i++)
+            {
+                var parts = args[i].Split(new[] { '=' }, 2);
+                if (parts.Length != 2) continue;
+                var emotionName = parts[0];
+                if (!uint.TryParse(parts[1], out var emotionValue)) continue;
+
+                for (int j = 0; j < talker.Components.Count; j++)
+                {
+                    if (talker.Components[j].Name == emotionName)
+                    {
+                        talker.Components[j].Value = Math.Min(emotionValue, 100u);
+                        break;
+                    }
+                }
+            }
+        }
 
         var success = talker.OutputWaveToFile(text, wavFile);
         if (!success)

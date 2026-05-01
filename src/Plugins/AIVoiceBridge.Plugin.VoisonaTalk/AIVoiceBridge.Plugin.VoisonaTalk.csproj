@@ -4,23 +4,22 @@
     <TargetFramework>net8.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <LangVersion>12</LangVersion>
-    <AssemblyName>AIVoiceBridge.Plugin.AIVoice</AssemblyName>
-    <RootNamespace>AIVoiceBridge.Plugin.AIVoice</RootNamespace>
+    <AssemblyName>AIVoiceBridge.Plugin.VoisonaTalk</AssemblyName>
+    <RootNamespace>AIVoiceBridge.Plugin.VoisonaTalk</RootNamespace>
+    <!-- プラグイン出力先（ソリューションルートの plugins/ フォルダ） -->
     <AppPluginsDir>$(MSBuildThisFileDirectory)..\..\..\plugins\</AppPluginsDir>
-    <DefaultItemExcludes>$(DefaultItemExcludes);lib\**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>
+    <!--
+      Private="false": Core の型 ID をホスト側と共有する（インターフェース同一性の保証）。
+      ExcludeAssets="runtime": Core.dll はホスト側のものを使用する。
+    -->
     <ProjectReference Include="..\..\AIVoiceBridge.Core\AIVoiceBridge.Core.csproj"
                       Private="false" ExcludeAssets="runtime"/>
   </ItemGroup>
 
-  <!--
-    AI.Talk.Editor.Api.dll は System.ServiceModel (WCF) に依存するため .NET 8 から直接使用不可。
-    ブリッジプロセス (AIVoiceBridge.AIVoice1Bridge.exe / net48) 経由で通信する。
-    lib\ の実DLL はブリッジ側のビルドでのみ参照される。
-  -->
-
+  <!-- ビルド後に plugins/ フォルダへ自動コピー -->
   <Target Name="CopyToPlugins" AfterTargets="Build">
     <MakeDir Directories="$(AppPluginsDir)" Condition="!Exists('$(AppPluginsDir)')"/>
     <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll"

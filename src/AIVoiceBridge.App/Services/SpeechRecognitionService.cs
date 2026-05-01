@@ -14,11 +14,15 @@ namespace AIVoiceBridge.App.Services;
 
 public enum RecognitionModelType
 {
-    /// <summary>Tiny (~77MB) 最速、精度低</summary>
+    /// <summary>Tiny (~77MB) 最速、精度低め</summary>
     Tiny,
-    /// <summary>Small (~467MB) バランス型、日本語に推奨</summary>
+    /// <summary>Base (~142MB) Tiny より高精度・日本語向け小型モデル</summary>
+    Base,
+    /// <summary>Small (~467MB) バランス型</summary>
     Small,
-    /// <summary>Medium (~1.5GB) 高精度、低速</summary>
+    /// <summary>Large v3 Turbo (~809MB) 蒸留版 Large。高精度かつ高速【ゲーム中推奨】</summary>
+    LargeV3Turbo,
+    /// <summary>Medium (~1.5GB) 最高精度、高 GPU 負荷</summary>
     Medium,
 }
 
@@ -47,6 +51,12 @@ public sealed class SpeechRecognitionService : IDisposable
     /// false: CPU のみ
     /// </summary>
     public bool UseGpu { get; set; } = true;
+
+    /// <summary>
+    /// Whisper initial_prompt. Biases the model toward these words/spellings.
+    /// Takes effect at the next InitializeAsync call.
+    /// </summary>
+    public string? InitialPrompt { get; set; }
 
     // ---- イベント ----
 
@@ -119,11 +129,15 @@ public sealed class SpeechRecognitionService : IDisposable
 
         var factoryOptions = new WhisperFactoryOptions { UseGpu = UseGpu, GpuDevice = 0 };
         _factory = WhisperFactory.FromPath(modelPath, factoryOptions);
-        _processor = _factory.CreateBuilder()
+        var builder = _factory.CreateBuilder()
             .WithLanguage("ja")
             .WithNoContext()
-            .WithNoSpeechThreshold(0.6f)
-            .Build();
+            .WithNoSpeechThreshold(0.6f);
+
+        if (!string.IsNullOrWhiteSpace(InitialPrompt))
+            builder = builder.WithPrompt(InitialPrompt);
+
+        _processor = builder.Build();
 
         _waveIn?.Dispose();
         _waveIn = new WaveInEvent
@@ -242,7 +256,7 @@ public sealed class SpeechRecognitionService : IDisposable
         if (version != Volatile.Read(ref _currentVersion)) return;
 
         var result = sb.ToString().Trim();
-        if (!string.IsNullOrEmpty(result))
+        if (!string.IsNullOrEmpty(result) && HasMeaningfulContent(result))
             TextRecognized?.Invoke(this, result);
     }
 
@@ -252,8 +266,15 @@ public sealed class SpeechRecognitionService : IDisposable
         "お疲れ様でした", "Thank you for watching", "Subscribe",
     ];
 
+    // Punctuation/whitespace chars that Whisper sometimes emits alone (especially with initial_prompt set)
+    private static readonly char[] _noisePunctuation =
+        [',', '.', '、', '。', '…', '・', '?', '!', '？', '！', ' ', '\t', '\n', '「', '」'];
+
     private static bool IsHallucination(string text) =>
         Array.Exists(_hallucinations, h => text.Contains(h, StringComparison.OrdinalIgnoreCase));
+
+    private static bool HasMeaningfulContent(string text) =>
+        text.AsSpan().IndexOfAnyExcept(_noisePunctuation) >= 0;
 
     // ========== ユーティリティ ==========
 
@@ -278,10 +299,12 @@ public sealed class SpeechRecognitionService : IDisposable
 
     private static GgmlType ToGgmlType(RecognitionModelType m) => m switch
     {
-        RecognitionModelType.Tiny => GgmlType.Tiny,
-        RecognitionModelType.Small => GgmlType.Small,
-        RecognitionModelType.Medium => GgmlType.Medium,
-        _ => GgmlType.Small,
+        RecognitionModelType.Tiny         => GgmlType.Tiny,
+        RecognitionModelType.Base         => GgmlType.Base,
+        RecognitionModelType.Small        => GgmlType.Small,
+        RecognitionModelType.LargeV3Turbo => GgmlType.LargeV3Turbo,
+        RecognitionModelType.Medium       => GgmlType.Medium,
+        _                                 => GgmlType.Small,
     };
 
     private static string GetModelPath(GgmlType type)
@@ -295,9 +318,19 @@ public sealed class SpeechRecognitionService : IDisposable
 
     public void Dispose()
     {
+        // 1. Stop audio capture and signal cancellation
         StopListening();
+        _cts?.Cancel();               // cancel even if StopListening skipped it (was not listening)
+        _channel.Writer.TryComplete(); // unblock ReadAllAsync so the loop can exit
+
+        // 2. Wait for inference to finish BEFORE freeing whisper resources.
+        //    whisper_free() called concurrently with whisper_full() is undefined behaviour
+        //    and can leave native OpenMP threads hung, keeping the process alive.
+        // 最大 2s 待機。それ以降は OnClosed の Environment.Exit(0) が強制終了する。
+        try { _processingTask?.Wait(TimeSpan.FromSeconds(2)); } catch { }
+
+        // 3. Now it is safe to release the processor and factory
         _cts?.Dispose();
-        _channel.Writer.TryComplete();
         _processor?.Dispose();
         _factory?.Dispose();
         _waveIn?.Dispose();

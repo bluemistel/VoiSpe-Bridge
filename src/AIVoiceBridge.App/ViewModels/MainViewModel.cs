@@ -18,7 +18,14 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private readonly SpeechRecognitionService _recognition;
     private readonly AudioOutputService _audioOutput;
     private readonly SettingsService _settingsService;
+    private readonly DictionaryService _dictionaryService;
     private CancellationTokenSource? _speakCts;
+
+    /// <summary>
+    /// Set by the View to open the preset editor dialog.
+    /// Receives a cloned preset; returns true when the user confirmed.
+    /// </summary>
+    public Func<DictionaryPreset, bool>? ShowPresetEditor { get; set; }
 
     // ---- ステータス ----
 
@@ -130,7 +137,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
-    private RecognitionModelType _selectedModel = RecognitionModelType.Small;
+    private RecognitionModelType _selectedModel = RecognitionModelType.LargeV3Turbo;
     public RecognitionModelType SelectedModel
     {
         get => _selectedModel;
@@ -170,11 +177,37 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         {
             if (Set(ref _selectedPlugin, value))
             {
+                LoadPluginConnectionSettings();
                 _ = OnPluginChangedAsync();
                 OnPropertyChanged(nameof(CanToggleListen));
                 OnPropertyChanged(nameof(IsCastSelectable));
+                OnPropertyChanged(nameof(PluginCastLabel));
             }
         }
+    }
+
+    // ---- プラグイン接続設定（IPluginWithConnectionSettings 実装プラグイン向け） ----
+
+    public ObservableCollection<ConnectionSettingItem> PluginConnectionSettings { get; } = [];
+
+    private bool _hasPluginConnectionSettings;
+    public bool HasPluginConnectionSettings
+    {
+        get => _hasPluginConnectionSettings;
+        private set => Set(ref _hasPluginConnectionSettings, value);
+    }
+
+    public RelayCommand ReconnectPluginCommand { get; private set; } = null!;
+
+    // ---- 感情パラメータ（IPluginWithEmotions 実装プラグイン向け） ----
+
+    public ObservableCollection<EmotionItem> EmotionParameters { get; } = [];
+
+    private bool _hasEmotionParameters;
+    public bool HasEmotionParameters
+    {
+        get => _hasEmotionParameters;
+        private set => Set(ref _hasEmotionParameters, value);
     }
 
     // ---- キャスト ----
@@ -188,12 +221,23 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         set
         {
             if (Set(ref _selectedCast, value) && _selectedPlugin != null && value != null)
+            {
                 _selectedPlugin.CurrentCast = value.Name;
+                OnPropertyChanged(nameof(PluginCastLabel));
+                _ = RefreshEmotionParametersAsync();
+            }
         }
     }
 
     public bool IsCastSelectable => AvailableCasts.Count > 1 ||
         (AvailableCasts.Count == 1 && !AvailableCasts[0].Name.StartsWith("（"));
+
+    /// <summary>Compact label shown in the header bar.</summary>
+    public string PluginCastLabel =>
+        _selectedPlugin == null ? "（プラグイン未選択）" :
+        IsCastSelectable && _selectedCast != null
+            ? $"{_selectedPlugin.Name}  /  {_selectedCast.Name}"
+            : _selectedPlugin.Name;
 
     // ---- 音声パラメータ ----
 
@@ -253,12 +297,34 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         set => Set(ref _manualInput, value);
     }
 
+    // ---- 辞書プリセット ----
+
+    public ObservableCollection<DictionaryPreset> DictionaryPresets { get; } = [];
+
+    private DictionaryPreset? _selectedDictionaryPreset;
+    public DictionaryPreset? SelectedDictionaryPreset
+    {
+        get => _selectedDictionaryPreset;
+        set
+        {
+            if (Set(ref _selectedDictionaryPreset, value) && value != null)
+                ApplyDictionaryPreset(value.Name);
+        }
+    }
+
     // ---- コマンド ----
 
     public RelayCommand ToggleListenCommand { get; }
     public RelayCommand<string> SpeakTextCommand { get; }
     public RelayCommand StopSpeakingCommand { get; }
     public RelayCommand ClearHistoryCommand { get; }
+    public RelayCommand AddPresetCommand { get; }
+    public RelayCommand EditPresetCommand { get; }
+    public RelayCommand DeletePresetCommand { get; }
+    public RelayCommand OpenPluginSettingsCommand { get; }
+
+    /// <summary>Set by the View to open (or focus) the plugin settings window.</summary>
+    public Action? ShowPluginSettings { get; set; }
 
     // ===== 初期化 =====
 
@@ -268,15 +334,25 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _recognition = new SpeechRecognitionService();
         _audioOutput = new AudioOutputService();
         _settingsService = new SettingsService();
+        _dictionaryService = new DictionaryService();
 
         ToggleListenCommand = new RelayCommand(_ => ToggleListen(), _ => CanToggleListen);
         SpeakTextCommand = new RelayCommand<string>(
             async text => await SpeakAsync(text ?? ManualInput, clearRecognized: false));
         StopSpeakingCommand = new RelayCommand(_ => StopSpeaking(), _ => IsSpeaking);
         ClearHistoryCommand = new RelayCommand(_ => History.Clear());
+        AddPresetCommand = new RelayCommand(_ => AddNewPreset());
+        EditPresetCommand = new RelayCommand(_ => EditSelectedPreset(),
+            _ => SelectedDictionaryPreset != null);
+        DeletePresetCommand = new RelayCommand(_ => DeleteSelectedPreset(),
+            _ => SelectedDictionaryPreset != null && DictionaryPresets.Count > 1);
+        OpenPluginSettingsCommand  = new RelayCommand(_ => ShowPluginSettings?.Invoke());
+        ReconnectPluginCommand     = new RelayCommand(_ => _ = OnPluginChangedAsync());
 
         LoadOutputDevices();
         _pluginManager.LoadPlugins();
+        _dictionaryService.Load();
+        PopulateDictionaryPresets();
         ApplySettings(_settingsService.Load());
     }
 
@@ -312,6 +388,9 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             }
         }
 
+        // プラグイン固有接続設定を復元してから接続（ConnectAsync より前に設定が必要）
+        RestoreAllPluginConnectionSettings(s.PluginConnectionSettings);
+
         // プラグイン（設定のプラグイン名で初回接続）
         PopulatePlugins(s.SelectedPluginName);
     }
@@ -320,17 +399,18 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         _settingsService.Save(new AppSettings
         {
-            SelectedPluginName = _selectedPlugin?.Name,
-            VoiceTriggerDb = _voiceTriggerDb,
-            NoiseGateDb = _noiseGateDb,
-            SilenceDurationMs = _silenceDurationMs,
-            SelectedModelName = _selectedModel.ToString(),
-            UseGpu = _useGpu,
-            Speed = _speed,
-            Volume = _volume,
-            Pitch = _pitch,
-            Intonation = _intonation,
+            SelectedPluginName       = _selectedPlugin?.Name,
+            VoiceTriggerDb           = _voiceTriggerDb,
+            NoiseGateDb              = _noiseGateDb,
+            SilenceDurationMs        = _silenceDurationMs,
+            SelectedModelName        = _selectedModel.ToString(),
+            UseGpu                   = _useGpu,
+            Speed                    = _speed,
+            Volume                   = _volume,
+            Pitch                    = _pitch,
+            Intonation               = _intonation,
             SelectedOutputDeviceName = _selectedOutputDevice?.Name,
+            PluginConnectionSettings = CollectAllPluginConnectionSettings(),
         });
     }
 
@@ -338,14 +418,20 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     public async Task InitializeRecognitionAsync()
     {
         _recognition.TextRecognized += OnTextRecognized;
+        // Use BeginInvoke (fire-and-forget) so background threads never block on the
+        // dispatcher. Dispatcher.Invoke would deadlock if called after the dispatcher
+        // starts shutting down, preventing the process from exiting.
         _recognition.AudioLevelChanged += (_, db) =>
-            Application.Current?.Dispatcher.Invoke(() =>
+            Application.Current?.Dispatcher.BeginInvoke(() =>
             {
                 AudioLevel = Math.Clamp((db + 60.0) / 60.0, 0.0, 1.0);
                 AudioLevelDbText = db < -59f ? "-- dB" : $"{db:F0} dB";
             });
         _recognition.StatusChanged += (_, msg) =>
-            Application.Current?.Dispatcher.Invoke(() => StatusText = msg);
+            Application.Current?.Dispatcher.BeginInvoke(() => StatusText = msg);
+
+        // Apply current active preset's initial_prompt before first build
+        _recognition.InitialPrompt = _dictionaryService.ActivePreset?.InitialPrompt;
 
         IsModelLoading = true;
         try
@@ -412,14 +498,100 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         OnPropertyChanged(nameof(SelectedPlugin));
         OnPropertyChanged(nameof(CanToggleListen));
         OnPropertyChanged(nameof(IsCastSelectable));
+        LoadPluginConnectionSettings();   // 接続設定を UI に反映
         _ = OnPluginChangedAsync();
+    }
+
+    private void PopulateDictionaryPresets()
+    {
+        DictionaryPresets.Clear();
+        foreach (var p in _dictionaryService.Presets)
+            DictionaryPresets.Add(p);
+
+        _selectedDictionaryPreset = DictionaryPresets
+            .FirstOrDefault(p => p.Name == _dictionaryService.ActivePreset?.Name)
+            ?? DictionaryPresets.FirstOrDefault();
+        OnPropertyChanged(nameof(SelectedDictionaryPreset));
+    }
+
+    private void ApplyDictionaryPreset(string name)
+    {
+        _dictionaryService.SetActivePreset(name);
+        _recognition.InitialPrompt = _dictionaryService.ActivePreset?.InitialPrompt;
+
+        // Rebuild the processor with the new initial_prompt; stop listening first if needed
+        if (IsListening)
+        {
+            _recognition.StopListening();
+            IsListening = false;
+            StatusText = $"プリセット「{name}」に変更しました。認識を再開してください。";
+        }
+        else
+        {
+            StatusText = $"プリセット「{name}」に変更しました。";
+        }
+        _ = RebuildProcessorAsync();
+    }
+
+    private async Task RebuildProcessorAsync()
+    {
+        IsModelLoading = true;
+        try { await _recognition.InitializeAsync(_selectedModel); }
+        catch (Exception ex) { StatusText = $"プロセッサ再構築に失敗: {ex.Message}"; }
+        finally { IsModelLoading = false; }
+    }
+
+    private void AddNewPreset()
+    {
+        var blank = new DictionaryPreset { Name = $"プリセット {DictionaryPresets.Count + 1}" };
+        if (ShowPresetEditor?.Invoke(blank) == true)
+        {
+            _dictionaryService.InsertPreset(blank);
+            PopulateDictionaryPresets();
+            _selectedDictionaryPreset =
+                DictionaryPresets.FirstOrDefault(p => p.Name == blank.Name)
+                ?? DictionaryPresets.FirstOrDefault();
+            OnPropertyChanged(nameof(SelectedDictionaryPreset));
+            if (_selectedDictionaryPreset != null)
+                ApplyDictionaryPreset(_selectedDictionaryPreset.Name);
+        }
+    }
+
+    private void EditSelectedPreset()
+    {
+        if (SelectedDictionaryPreset == null) return;
+        var clone = SelectedDictionaryPreset.Clone();
+        if (ShowPresetEditor?.Invoke(clone) == true)
+        {
+            _dictionaryService.UpdatePreset(clone);
+
+            // Refresh the list item (Name might have changed)
+            PopulateDictionaryPresets();
+            _selectedDictionaryPreset =
+                DictionaryPresets.FirstOrDefault(p => p.Name == clone.Name)
+                ?? DictionaryPresets.FirstOrDefault();
+            OnPropertyChanged(nameof(SelectedDictionaryPreset));
+
+            // Re-apply if this is the active preset
+            if (_dictionaryService.ActivePreset?.Name == clone.Name)
+                ApplyDictionaryPreset(clone.Name);
+        }
+    }
+
+    private void DeleteSelectedPreset()
+    {
+        if (SelectedDictionaryPreset == null || DictionaryPresets.Count <= 1) return;
+        var name = SelectedDictionaryPreset.Name;
+        _dictionaryService.DeletePreset(name);
+        PopulateDictionaryPresets();
     }
 
     // ===== イベントハンドラ =====
 
     private void OnTextRecognized(object? sender, string text)
     {
-        Application.Current?.Dispatcher.Invoke(() => RecognizedText = text);
+        text = _dictionaryService.Apply(text);
+        Application.Current?.Dispatcher.BeginInvoke(() => RecognizedText = text);
         _ = SpeakAsync(text, clearRecognized: true);
     }
 
@@ -440,9 +612,12 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
                     AvailableCasts.Add(c);
                 SelectedCast = AvailableCasts.FirstOrDefault();
                 OnPropertyChanged(nameof(IsCastSelectable));
+                OnPropertyChanged(nameof(PluginCastLabel));
             });
 
             SyncOptions();
+            // キャスト確定後に感情パラメータを取得
+            await RefreshEmotionParametersAsync();
             StatusText = $"{_selectedPlugin.Name} 接続済み";
         }
         catch (Exception ex)
@@ -488,7 +663,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
         // A.I.VOICE2 への送信と同時に認識テキストをクリア（発声完了を待たない）
         if (clearRecognized)
-            Application.Current?.Dispatcher.Invoke(() => RecognizedText = string.Empty);
+            Application.Current?.Dispatcher.BeginInvoke(() => RecognizedText = string.Empty);
 
         try
         {
@@ -503,7 +678,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
             if (!ct.IsCancellationRequested)
             {
-                Application.Current?.Dispatcher.Invoke(() =>
+                Application.Current?.Dispatcher.BeginInvoke(() =>
                 {
                     History.Insert(0, new HistoryEntry(DateTime.Now, text));
                     if (History.Count > 200) History.RemoveAt(200);
@@ -543,6 +718,118 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         };
     }
 
+    // ===== プラグイン接続設定 =====
+
+    /// <summary>
+    /// 選択中プラグインの接続設定を UI 用 ObservableCollection に読み込む。
+    /// プラグインが IPluginWithConnectionSettings を実装していない場合はコレクションを空にする。
+    /// </summary>
+    private void LoadPluginConnectionSettings()
+    {
+        PluginConnectionSettings.Clear();
+
+        if (_selectedPlugin is not IPluginWithConnectionSettings settingsPlugin)
+        {
+            HasPluginConnectionSettings = false;
+            return;
+        }
+
+        foreach (var def in settingsPlugin.ConnectionSettingDefinitions)
+        {
+            var item = new ConnectionSettingItem(
+                def.Key,
+                def.Label,
+                settingsPlugin.GetConnectionSetting(def.Key) ?? def.DefaultValue,
+                def.IsPassword,
+                def.Placeholder);
+
+            item.ValueChanged += (key, value) =>
+            {
+                settingsPlugin.SetConnectionSetting(key, value);
+                SaveSettings();   // 変更を即座に永続化
+            };
+
+            PluginConnectionSettings.Add(item);
+        }
+
+        HasPluginConnectionSettings = PluginConnectionSettings.Count > 0;
+    }
+
+    /// <summary>
+    /// 起動時に AppSettings から全プラグインの接続設定を復元する。
+    /// ConnectAsync() より前に呼ぶこと。
+    /// </summary>
+    private void RestoreAllPluginConnectionSettings(
+        Dictionary<string, Dictionary<string, string>> saved)
+    {
+        foreach (var plugin in _pluginManager.Plugins)
+        {
+            if (plugin is not IPluginWithConnectionSettings sp) continue;
+            if (!saved.TryGetValue(plugin.Name, out var dict)) continue;
+
+            foreach (var (key, value) in dict)
+                sp.SetConnectionSetting(key, value);
+        }
+    }
+
+    // ===== 感情パラメータ =====
+
+    /// <summary>
+    /// 現在のプラグイン・キャストの感情パラメータを非同期で読み込み、UI コレクションを更新する。
+    /// プラグインが IPluginWithEmotions を実装していない場合はコレクションを空にする。
+    /// </summary>
+    private async Task RefreshEmotionParametersAsync()
+    {
+        if (_selectedPlugin is not IPluginWithEmotions emotionPlugin)
+        {
+            Application.Current?.Dispatcher.BeginInvoke(() =>
+            {
+                EmotionParameters.Clear();
+                HasEmotionParameters = false;
+            });
+            return;
+        }
+
+        try { await emotionPlugin.RefreshEmotionsAsync(); }
+        catch { /* 感情取得失敗（ボイス未対応など）は無視 */ }
+
+        Application.Current?.Dispatcher.BeginInvoke(() =>
+        {
+            EmotionParameters.Clear();
+            foreach (var ep in emotionPlugin.GetEmotions())
+            {
+                var item = new EmotionItem(ep.Key, ep.Label, ep.Value, ep.Min, ep.Max);
+                item.ValueChanged += (key, val) => emotionPlugin.SetEmotion(key, val);
+                EmotionParameters.Add(item);
+            }
+            HasEmotionParameters = EmotionParameters.Count > 0;
+        });
+    }
+
+    /// <summary>全プラグインの接続設定を AppSettings 用の辞書に収集する。</summary>
+    private Dictionary<string, Dictionary<string, string>> CollectAllPluginConnectionSettings()
+    {
+        var result = new Dictionary<string, Dictionary<string, string>>();
+
+        foreach (var plugin in _pluginManager.Plugins)
+        {
+            if (plugin is not IPluginWithConnectionSettings sp) continue;
+
+            var dict = new Dictionary<string, string>();
+            foreach (var def in sp.ConnectionSettingDefinitions)
+            {
+                var value = sp.GetConnectionSetting(def.Key);
+                if (value != null)
+                    dict[def.Key] = value;
+            }
+
+            if (dict.Count > 0)
+                result[plugin.Name] = dict;
+        }
+
+        return result;
+    }
+
     // ===== INotifyPropertyChanged =====
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -560,6 +847,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     public void Dispose()
     {
+        StopSpeaking();
+        _speakCts?.Dispose();
         SaveSettings();
         _recognition.Dispose();
         _audioOutput.Dispose();
