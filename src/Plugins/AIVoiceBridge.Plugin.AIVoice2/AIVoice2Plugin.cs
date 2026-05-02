@@ -1,12 +1,12 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using AIVoiceBridge.Core;
+using VoiSpeBridge.Core;
 
-namespace AIVoiceBridge.Plugin.AIVoice2;
+namespace VoiSpeBridge.Plugin.AIVoice2;
 
 /// <summary>
 /// A.I.VOICE2 (Flutter製) プラグイン。

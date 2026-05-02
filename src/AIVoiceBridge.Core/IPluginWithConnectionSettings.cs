@@ -1,6 +1,6 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
-namespace AIVoiceBridge.Core;
+namespace VoiSpeBridge.Core;
 
 /// <summary>
 /// プラグイン固有の接続設定（ホスト名・ポート・パスワード等）を公開するオプショナルインターフェース。

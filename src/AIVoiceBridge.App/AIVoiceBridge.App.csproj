@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -6,8 +6,9 @@
     <Nullable>enable</Nullable>
     <LangVersion>12</LangVersion>
     <UseWPF>true</UseWPF>
-    <AssemblyName>AIVoiceBridge</AssemblyName>
-    <RootNamespace>AIVoiceBridge.App</RootNamespace>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>VoiSpeBridge</AssemblyName>
+    <RootNamespace>VoiSpeBridge.App</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 
@@ -26,6 +27,13 @@
     <PackageReference Include="NAudio" Version="2.2.1" />
     <!-- MVVMヘルパー -->
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
+    <!-- ブラウザ音声認識（Web Speech API）用 WebView2 -->
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2849.39" />
+    <!-- ReazonSpeech / SherpaOnnx ストリーミング音声認識（日本語特化・GPU 不要）-->
+    <PackageReference Include="org.k2fsa.sherpa.onnx" Version="1.13.0" />
+    <PackageReference Include="org.k2fsa.sherpa.onnx.runtime.win-x64" Version="1.13.0" />
+    <!-- モデル tar.bz2 アーカイブ展開用 -->
+    <PackageReference Include="SharpCompress" Version="0.38.0" />
   </ItemGroup>
 
   <Target Name="CreatePluginsFolder" AfterTargets="Build">

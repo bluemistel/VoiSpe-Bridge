@@ -1,6 +1,6 @@
-using System.Windows;
+﻿using System.Windows;
 
-namespace AIVoiceBridge.App.Views;
+namespace VoiSpeBridge.App.Views;
 
 public partial class PluginSettingsWindow : Window
 {

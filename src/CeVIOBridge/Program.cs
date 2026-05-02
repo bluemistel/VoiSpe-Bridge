@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Text;
 
@@ -10,7 +10,7 @@ using System.Text;
 using CeVIO.Talk.RemoteService2;
 #endif
 
-namespace AIVoiceBridge.CeVIOBridge;
+namespace VoiSpeBridge.CeVIOBridge;
 
 static class Program
 {

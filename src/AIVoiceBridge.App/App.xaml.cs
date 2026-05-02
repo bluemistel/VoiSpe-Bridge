@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using System.Windows;
 
-namespace AIVoiceBridge.App;
+namespace VoiSpeBridge.App;
 
 public partial class App : Application
 {

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -6,9 +6,9 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using AIVoiceBridge.Core;
+using VoiSpeBridge.Core;
 
-namespace AIVoiceBridge.Plugin.AIVoice;
+namespace VoiSpeBridge.Plugin.AIVoice;
 
 /// <summary>
 /// A.I.VOICE v1 プラグイン。

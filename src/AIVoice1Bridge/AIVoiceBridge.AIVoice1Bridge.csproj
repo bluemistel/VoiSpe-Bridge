@@ -1,10 +1,10 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
     <OutputType>Exe</OutputType>
-    <AssemblyName>AIVoiceBridge.AIVoice1Bridge</AssemblyName>
-    <RootNamespace>AIVoiceBridge.AIVoice1Bridge</RootNamespace>
+    <AssemblyName>VoiSpeBridge.AIVoice1Bridge</AssemblyName>
+    <RootNamespace>VoiSpeBridge.AIVoice1Bridge</RootNamespace>
     <Nullable>enable</Nullable>
     <LangVersion>12</LangVersion>
     <AppPluginsDir>$(MSBuildThisFileDirectory)..\..\plugins\</AppPluginsDir>

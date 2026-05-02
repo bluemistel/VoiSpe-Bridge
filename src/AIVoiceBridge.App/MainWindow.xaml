@@ -1,9 +1,10 @@
-<Window x:Class="AIVoiceBridge.App.MainWindow"
+﻿<Window x:Class="VoiSpeBridge.App.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:vm="clr-namespace:AIVoiceBridge.App.ViewModels"
-        xmlns:svc="clr-namespace:AIVoiceBridge.App.Services"
-        Title="A.I.VOICE Bridge"
+        xmlns:vm="clr-namespace:VoiSpeBridge.App.ViewModels"
+        xmlns:svc="clr-namespace:VoiSpeBridge.App.Services"
+        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+        Title="VoiSpe-Bridge"
         Width="920" Height="680"
         MinWidth="720" MinHeight="520"
         Background="{StaticResource BackgroundBrush}"
@@ -118,7 +119,7 @@
 
         <!-- アプリタイトル -->
         <TextBlock Grid.Column="0"
-                   Text="A.I.VOICE Bridge"
+                   Text="VoiSpe-Bridge"
                    FontSize="13" FontWeight="SemiBold"
                    Foreground="{StaticResource AccentBrush}"
                    VerticalAlignment="Center"/>
@@ -130,6 +131,11 @@
                      Foreground="{StaticResource TextSecondaryBrush}"
                      FontSize="11" VerticalAlignment="Center"
                      Margin="0,0,6,0"/>
+          <Button Content="🖥 配信用字幕"
+                  Command="{Binding ToggleSubtitleWindowCommand}"
+                  Style="{StaticResource HeaderPluginButton}"
+                  Margin="0,0,6,0"
+                  ToolTip="グリーンバック字幕ウィンドウを表示／非表示"/>
           <Button Content="⚙ 音声合成設定"
                   Command="{Binding OpenPluginSettingsCommand}"
                   Style="{StaticResource HeaderPluginButton}"/>
@@ -328,120 +334,306 @@
             <TextBlock Text="音声認識"
                        FontSize="13" FontWeight="SemiBold" Margin="0,0,0,10"/>
 
-            <TextBlock Style="{StaticResource Label}" Text="Whisper モデル"/>
-            <ComboBox ItemsSource="{Binding AvailableModels}"
-                      SelectedItem="{Binding SelectedModel}"
-                      IsEnabled="{Binding IsModelLoading, Converter={StaticResource InverseBool}}"
+            <!-- 認識エンジン選択 -->
+            <TextBlock Style="{StaticResource Label}" Text="認識エンジン"/>
+            <ComboBox ItemsSource="{Binding AvailableEngines}"
+                      SelectedItem="{Binding SelectedEngine}"
                       Margin="0,0,0,4">
               <ComboBox.ItemTemplate>
                 <DataTemplate>
-                  <TextBlock Text="{Binding Converter={StaticResource ModelTypeToLabel}}"/>
+                  <TextBlock Text="{Binding Converter={StaticResource EngineTypeToLabel}}"/>
                 </DataTemplate>
               </ComboBox.ItemTemplate>
             </ComboBox>
-            <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
-                       FontSize="10" TextWrapping="Wrap" Margin="0,0,0,8">
-              ゲーム中は Large v3 Turbo または Base を推奨。初回は自動ダウンロード。
-              変更するとモデルが再読み込みされます。
-            </TextBlock>
+            <!-- ブラウザ音声認識の説明（Browser エンジン選択時のみ表示） -->
+            <Border Background="{StaticResource BackgroundBrush}"
+                    CornerRadius="4" Padding="8"
+                    Margin="0,4,0,8"
+                    Visibility="{Binding IsBrowserEngine, Converter={StaticResource BoolToVis}}">
+              <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
+                         FontSize="10" TextWrapping="Wrap">
+                ● Google の音声認識サーバーで処理されます（音声データが送信されます）&#x0a;
+                ● GPU を使用しないためゲーム配信中の負荷を大幅に軽減できます&#x0a;
+                ● WebView2（Chromium）ベースで動作します&#x0a;
+                ● 発話検出はブラウザ側で自動処理されます
+              </TextBlock>
+            </Border>
 
-            <CheckBox IsChecked="{Binding UseGpu}"
-                      Foreground="{StaticResource TextPrimaryBrush}"
-                      Margin="0,0,0,2">
-              <TextBlock Text="GPU アクセラレーション（推奨）" FontSize="12"/>
-            </CheckBox>
-            <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
-                       FontSize="10" TextWrapping="Wrap" Margin="0,0,0,10">
-              NVIDIA: CUDA、AMD/Intel: Vulkan を自動選択。
-              変更するとモデルが再読み込みされます。
-            </TextBlock>
+            <!-- ReazonSpeech の説明（ReazonSpeech エンジン選択時のみ表示） -->
+            <Border Background="{StaticResource BackgroundBrush}"
+                    CornerRadius="4" Padding="8"
+                    Margin="0,4,0,8"
+                    Visibility="{Binding IsReazonSpeechEngine, Converter={StaticResource BoolToVis}}">
+              <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
+                         FontSize="10" TextWrapping="Wrap">
+                ● 日本語特化ローカル実行エンジン（GPU 不要・完全オフライン）&#x0a;
+                ● ReazonSpeech データセットで訓練された高精度日本語モデル&#x0a;
+                ● 初回のみモデルを自動ダウンロードします（数百MB・数分）
+              </TextBlock>
+            </Border>
 
-            <!-- 発話検出レベル -->
+            <!-- Whisper 専用設定（モデル選択・GPU）-->
+            <StackPanel Visibility="{Binding IsWhisperEngine,
+                                    Converter={StaticResource BoolToVis}}">
+              <TextBlock Style="{StaticResource Label}" Text="Whisper モデル"/>
+              <ComboBox ItemsSource="{Binding AvailableModels}"
+                        SelectedItem="{Binding SelectedModel}"
+                        IsEnabled="{Binding IsModelLoading, Converter={StaticResource InverseBool}}"
+                        Margin="0,0,0,4">
+                <ComboBox.ItemTemplate>
+                  <DataTemplate>
+                    <TextBlock Text="{Binding Converter={StaticResource ModelTypeToLabel}}"/>
+                  </DataTemplate>
+                </ComboBox.ItemTemplate>
+              </ComboBox>
+              <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
+                         FontSize="10" TextWrapping="Wrap" Margin="0,0,0,8">
+                ゲーム中は Large v3 Turbo または Base を推奨。初回は自動ダウンロード。
+                変更するとモデルが再読み込みされます。
+              </TextBlock>
+
+              <CheckBox IsChecked="{Binding UseGpu}"
+                        Foreground="{StaticResource TextPrimaryBrush}"
+                        Margin="0,0,0,2">
+                <TextBlock Text="GPU アクセラレーション（推奨）" FontSize="12"/>
+              </CheckBox>
+              <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
+                         FontSize="10" TextWrapping="Wrap" Margin="0,0,0,10">
+                NVIDIA: CUDA、AMD/Intel: Vulkan を自動選択。
+                変更するとモデルが再読み込みされます。
+              </TextBlock>
+            </StackPanel>
+
+            <!-- VAD 設定（Whisper・ReazonSpeech 共通）-->
+            <StackPanel Visibility="{Binding ShowVadSettings,
+                                    Converter={StaticResource BoolToVis}}">
+
+              <!-- 発話検出レベル -->
+              <Grid Margin="0,0,0,2">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Style="{StaticResource Label}" Text="発話検出レベル"/>
+                <TextBlock Grid.Column="1" Style="{StaticResource SliderValue}"
+                           Text="{Binding VoiceTriggerDb, StringFormat='{}{0:F0} dB'}"/>
+              </Grid>
+              <Grid Margin="0,0,0,2">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto"/>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="-50" FontSize="10"
+                           Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                <Slider Grid.Column="1" Minimum="-50" Maximum="0"
+                        Value="{Binding VoiceTriggerDb}"
+                        TickFrequency="5" IsSnapToTickEnabled="True" Margin="4,0"/>
+                <TextBlock Grid.Column="2" Text="0" FontSize="10"
+                           Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+              </Grid>
+              <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
+                         FontSize="10" TextWrapping="Wrap" Margin="0,0,0,8">
+                この音量を超えると発話開始とみなします。
+                BGM 等がある場合は高め (-15〜-10 dB) に。
+              </TextBlock>
+
+              <!-- ノイズゲート -->
+              <Grid Margin="0,0,0,2">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Style="{StaticResource Label}" Text="ノイズゲート（下限）"/>
+                <TextBlock Grid.Column="1" Style="{StaticResource SliderValue}"
+                           Text="{Binding NoiseGateDb, StringFormat='{}{0:F0} dB'}"/>
+              </Grid>
+              <Grid Margin="0,0,0,2">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto"/>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="-60" FontSize="10"
+                           Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                <Slider Grid.Column="1" Minimum="-60" Maximum="-10"
+                        Value="{Binding NoiseGateDb}"
+                        TickFrequency="5" IsSnapToTickEnabled="True" Margin="4,0"/>
+                <TextBlock Grid.Column="2" Text="-10" FontSize="10"
+                           Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+              </Grid>
+              <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
+                         FontSize="10" TextWrapping="Wrap" Margin="0,0,0,10">
+                発話検出レベルより低く設定してください
+                （目安: 検出レベル − 10〜20 dB）。
+              </TextBlock>
+
+              <!-- 無音判定時間 -->
+              <Grid Margin="0,0,0,2">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Style="{StaticResource Label}" Text="無音で確定 (ms)"/>
+                <TextBlock Grid.Column="1" Style="{StaticResource SliderValue}"
+                           Text="{Binding SilenceDurationMs}"/>
+              </Grid>
+              <Slider Minimum="300" Maximum="2000"
+                      Value="{Binding SilenceDurationMs}"
+                      TickFrequency="100" IsSnapToTickEnabled="True"
+                      Margin="0,0,0,4"/>
+              <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
+                         FontSize="10" TextWrapping="Wrap">
+                発話後この時間無音が続くと自動で確定・読み上げします。
+              </TextBlock>
+            </StackPanel>
+          </StackPanel>
+        </Border>
+
+        <!-- 配信用字幕設定 -->
+        <Border Style="{StaticResource Card}">
+          <StackPanel>
+            <TextBlock Text="配信用字幕"
+                       FontSize="13" FontWeight="SemiBold" Margin="0,0,0,10"/>
+
+            <!-- フォント選択 -->
+            <TextBlock Style="{StaticResource Label}" Text="フォント"/>
+            <ComboBox ItemsSource="{Binding Subtitle.InstalledFonts}"
+                      SelectedItem="{Binding Subtitle.FontFamilyName}"
+                      Margin="0,0,0,8"
+                      VirtualizingPanel.IsVirtualizing="True"
+                      VirtualizingPanel.VirtualizationMode="Recycling">
+              <ComboBox.ItemTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding}"/>
+                </DataTemplate>
+              </ComboBox.ItemTemplate>
+            </ComboBox>
+
+            <!-- フォントサイズ -->
             <Grid Margin="0,0,0,2">
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
-              <TextBlock Style="{StaticResource Label}" Text="発話検出レベル"/>
+              <TextBlock Style="{StaticResource Label}" Text="フォントサイズ"/>
               <TextBlock Grid.Column="1" Style="{StaticResource SliderValue}"
-                         Text="{Binding VoiceTriggerDb, StringFormat='{}{0:F0} dB'}"/>
+                         Text="{Binding Subtitle.FontSize, StringFormat='{}{0:F0}'}"/>
             </Grid>
-            <Grid Margin="0,0,0,2">
-              <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-              </Grid.ColumnDefinitions>
-              <TextBlock Text="-50" FontSize="10"
-                         Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
-              <Slider Grid.Column="1" Minimum="-50" Maximum="0"
-                      Value="{Binding VoiceTriggerDb}"
-                      TickFrequency="5" IsSnapToTickEnabled="True" Margin="4,0"/>
-              <TextBlock Grid.Column="2" Text="0" FontSize="10"
-                         Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
-            </Grid>
-            <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
-                       FontSize="10" TextWrapping="Wrap" Margin="0,0,0,8">
-              この音量を超えると発話開始とみなします。
-              BGM 等がある場合は高め (-15〜-10 dB) に。
-            </TextBlock>
+            <Slider Minimum="20" Maximum="200"
+                    Value="{Binding Subtitle.FontSize}"
+                    TickFrequency="4" IsSnapToTickEnabled="True"
+                    Margin="0,0,0,10"/>
 
-            <!-- ノイズゲート -->
+            <!-- 縁取りの太さ -->
             <Grid Margin="0,0,0,2">
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
-              <TextBlock Style="{StaticResource Label}" Text="ノイズゲート（下限）"/>
+              <TextBlock Style="{StaticResource Label}" Text="縁取りの太さ"/>
               <TextBlock Grid.Column="1" Style="{StaticResource SliderValue}"
-                         Text="{Binding NoiseGateDb, StringFormat='{}{0:F0} dB'}"/>
+                         Text="{Binding Subtitle.StrokeThickness, StringFormat='{}{0:F0}'}"/>
             </Grid>
-            <Grid Margin="0,0,0,2">
-              <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-              </Grid.ColumnDefinitions>
-              <TextBlock Text="-60" FontSize="10"
-                         Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
-              <Slider Grid.Column="1" Minimum="-60" Maximum="-10"
-                      Value="{Binding NoiseGateDb}"
-                      TickFrequency="5" IsSnapToTickEnabled="True" Margin="4,0"/>
-              <TextBlock Grid.Column="2" Text="-10" FontSize="10"
-                         Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
-            </Grid>
-            <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
-                       FontSize="10" TextWrapping="Wrap" Margin="0,0,0,10">
-              発話検出レベルより低く設定してください
-              （目安: 検出レベル − 10〜20 dB）。
-            </TextBlock>
+            <Slider Minimum="0" Maximum="40"
+                    Value="{Binding Subtitle.StrokeThickness}"
+                    TickFrequency="1" IsSnapToTickEnabled="True"
+                    Margin="0,0,0,10"/>
 
-            <!-- 無音判定時間 -->
-            <Grid Margin="0,0,0,2">
+            <!-- 文字色 ／ 縁取り色 -->
+            <Grid>
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="*"/>
               </Grid.ColumnDefinitions>
-              <TextBlock Style="{StaticResource Label}" Text="無音で確定 (ms)"/>
-              <TextBlock Grid.Column="1" Style="{StaticResource SliderValue}"
-                         Text="{Binding SilenceDurationMs}"/>
+
+              <!-- 文字色 -->
+              <StackPanel Grid.Column="0">
+                <TextBlock Style="{StaticResource Label}" Text="文字色"/>
+                <Button Height="30"
+                        Click="OnPickFontColor"
+                        BorderBrush="{StaticResource BorderBrush}"
+                        BorderThickness="1"
+                        Padding="4,0"
+                        Cursor="Hand"
+                        ToolTip="クリックしてカラーピッカーを開く">
+                  <Button.Background>
+                    <SolidColorBrush Color="{Binding Subtitle.FontColor}"/>
+                  </Button.Background>
+                  <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                      <Border Background="{TemplateBinding Background}"
+                              BorderBrush="{TemplateBinding BorderBrush}"
+                              BorderThickness="{TemplateBinding BorderThickness}"
+                              CornerRadius="4">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                      </Border>
+                    </ControlTemplate>
+                  </Button.Template>
+                  <Rectangle Height="14" Margin="6,0" RadiusX="2" RadiusY="2">
+                    <Rectangle.Fill>
+                      <SolidColorBrush Color="{Binding Subtitle.FontColor}"/>
+                    </Rectangle.Fill>
+                  </Rectangle>
+                </Button>
+              </StackPanel>
+
+              <!-- 縁取り色 -->
+              <StackPanel Grid.Column="2">
+                <TextBlock Style="{StaticResource Label}" Text="縁取り色"/>
+                <Button Height="30"
+                        Click="OnPickStrokeColor"
+                        BorderBrush="{StaticResource BorderBrush}"
+                        BorderThickness="1"
+                        Padding="4,0"
+                        Cursor="Hand"
+                        ToolTip="クリックしてカラーピッカーを開く">
+                  <Button.Background>
+                    <SolidColorBrush Color="{Binding Subtitle.StrokeColor}"/>
+                  </Button.Background>
+                  <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                      <Border Background="{TemplateBinding Background}"
+                              BorderBrush="{TemplateBinding BorderBrush}"
+                              BorderThickness="{TemplateBinding BorderThickness}"
+                              CornerRadius="4">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                      </Border>
+                    </ControlTemplate>
+                  </Button.Template>
+                  <Rectangle Height="14" Margin="6,0" RadiusX="2" RadiusY="2">
+                    <Rectangle.Fill>
+                      <SolidColorBrush Color="{Binding Subtitle.StrokeColor}"/>
+                    </Rectangle.Fill>
+                  </Rectangle>
+                </Button>
+              </StackPanel>
             </Grid>
-            <Slider Minimum="300" Maximum="2000"
-                    Value="{Binding SilenceDurationMs}"
-                    TickFrequency="100" IsSnapToTickEnabled="True"
-                    Margin="0,0,0,4"/>
+
             <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
-                       FontSize="10" TextWrapping="Wrap">
-              発話後この時間無音が続くと自動で確定・読み上げします。
+                       FontSize="10" TextWrapping="Wrap" Margin="0,8,0,0">
+              OBS：ウィンドウキャプチャ →「VoiSpe-Bridge - 配信用字幕」→
+              フィルタ →「クロマキー」→ 緑 (#00FF00) を設定してください。
+              上部の帯はクロップで除外できます。
             </TextBlock>
           </StackPanel>
         </Border>
 
-        <TextBlock Text="A.I.VOICE Bridge v1.0"
+        <TextBlock Text="VoiSpe-Bridge v1.0"
                    Foreground="{StaticResource TextSecondaryBrush}"
                    FontSize="11" HorizontalAlignment="Center" Margin="0,4"/>
       </StackPanel>
     </ScrollViewer>
+
+    <!-- WebView2（ブラウザ音声認識用・非表示で常駐） -->
+    <!-- Opacity は WebView2 の HWND に直接適用できないため Border でラップして隠す -->
+    <Border Grid.Row="0" Grid.RowSpan="3" Grid.ColumnSpan="3"
+            Width="1" Height="1"
+            HorizontalAlignment="Left" VerticalAlignment="Top"
+            Opacity="0" IsHitTestVisible="False">
+      <wv2:WebView2 x:Name="BrowserWebView" Width="1" Height="1"/>
+    </Border>
 
   </Grid>
 </Window>

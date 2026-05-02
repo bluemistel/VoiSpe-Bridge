@@ -1,11 +1,13 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
-using AIVoiceBridge.App.Services;
+using System.Windows.Media;
+using VoiSpeBridge.App.Services;
+using VoiSpeBridge.App.ViewModels;
 
-namespace AIVoiceBridge.App.Converters;
+namespace VoiSpeBridge.App.Converters;
 
 [ValueConversion(typeof(bool), typeof(Visibility))]
 public sealed class BoolToVisibilityConverter : IValueConverter
@@ -52,6 +54,34 @@ public sealed class ModelTypeToLabelConverter : IValueConverter
 
     public object Convert(object value, Type t, object p, CultureInfo c)
         => value is RecognitionModelType m && Labels.TryGetValue(m, out var s) ? s : value?.ToString() ?? string.Empty;
+
+    public object ConvertBack(object value, Type t, object p, CultureInfo c)
+        => throw new NotSupportedException();
+}
+
+/// <summary>System.Windows.Media.Color → SolidColorBrush に変換するコンバーター。</summary>
+[ValueConversion(typeof(Color), typeof(SolidColorBrush))]
+public sealed class ColorToBrushConverter : IValueConverter
+{
+    public object Convert(object value, Type t, object p, CultureInfo c)
+        => value is Color col ? new SolidColorBrush(col) : Brushes.Transparent;
+
+    public object ConvertBack(object value, Type t, object p, CultureInfo c)
+        => value is SolidColorBrush b ? b.Color : Colors.Transparent;
+}
+
+/// <summary>RecognitionEngine → 表示用日本語ラベルに変換するコンバーター。</summary>
+[ValueConversion(typeof(RecognitionEngine), typeof(string))]
+public sealed class EngineTypeToLabelConverter : IValueConverter
+{
+    public object Convert(object value, Type t, object p, CultureInfo c)
+        => value is RecognitionEngine e ? e switch
+        {
+            RecognitionEngine.Whisper      => "Whisper  （ローカル・GPU/CPU）",
+            RecognitionEngine.Browser      => "ブラウザ  （Google クラウド・GPU不使用）",
+            RecognitionEngine.ReazonSpeech => "ReazonSpeech  （ローカル・CPU・日本語特化・ストリーミング）",
+            _                              => value.ToString() ?? string.Empty,
+        } : value?.ToString() ?? string.Empty;
 
     public object ConvertBack(object value, Type t, object p, CultureInfo c)
         => throw new NotSupportedException();

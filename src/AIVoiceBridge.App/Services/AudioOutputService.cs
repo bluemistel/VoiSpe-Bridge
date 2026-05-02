@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using NAudio.Wave;
 
-namespace AIVoiceBridge.App.Services;
+namespace VoiSpeBridge.App.Services;
 
 /// <summary>
 /// NAudio を用いて任意の出力デバイスに WAV データを再生する。

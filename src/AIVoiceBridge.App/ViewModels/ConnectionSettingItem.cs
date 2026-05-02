@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace AIVoiceBridge.App.ViewModels;
+namespace VoiSpeBridge.App.ViewModels;
 
 /// <summary>
 /// プラグイン接続設定の1項目を表すバインド可能な ViewModel。

@@ -1,11 +1,11 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows;
-using AIVoiceBridge.App.Services;
+using VoiSpeBridge.App.Services;
 
-namespace AIVoiceBridge.App.Views;
+namespace VoiSpeBridge.App.Views;
 
 /// <summary>
 /// Per-row binding model for the dictionary DataGrid.

@@ -1,11 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <LangVersion>12</LangVersion>
-    <AssemblyName>AIVoiceBridge.Plugin.Voicepeak</AssemblyName>
-    <RootNamespace>AIVoiceBridge.Plugin.Voicepeak</RootNamespace>
+    <AssemblyName>VoiSpeBridge.Plugin.Voicepeak</AssemblyName>
+    <RootNamespace>VoiSpeBridge.Plugin.Voicepeak</RootNamespace>
     <AppPluginsDir>$(MSBuildThisFileDirectory)..\..\..\plugins\</AppPluginsDir>
   </PropertyGroup>
 

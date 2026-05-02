@@ -1,7 +1,7 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace AIVoiceBridge.Core;
+namespace VoiSpeBridge.Core;
 
 /// <summary>
 /// 感情値・スタイル重みを公開するオプショナルインターフェース。

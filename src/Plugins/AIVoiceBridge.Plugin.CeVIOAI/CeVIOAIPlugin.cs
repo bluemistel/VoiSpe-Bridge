@@ -1,12 +1,12 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
-using AIVoiceBridge.Core;
+using VoiSpeBridge.Core;
 
-namespace AIVoiceBridge.Plugin.CeVIOAI;
+namespace VoiSpeBridge.Plugin.CeVIOAI;
 
 /// <summary>
 /// CeVIO AI プラグイン。

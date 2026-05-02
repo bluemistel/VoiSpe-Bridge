@@ -1,4 +1,4 @@
-# AIVoiceBridge build & packaging script
+# VoiSpe-Bridge build & packaging script
 #
 # Usage:
 #   .\build.ps1                          # Release build (default)
@@ -17,7 +17,7 @@ $root        = $PSScriptRoot
 $distApp     = Join-Path $root "dist\app"
 $distPlugins = Join-Path $root "dist\plugins"
 
-Write-Host "=== AIVoiceBridge build start ($Configuration) ===" -ForegroundColor Cyan
+Write-Host "=== VoiSpe-Bridge build start ($Configuration) ===" -ForegroundColor Cyan
 
 # ---- Init output folders ----------------------------------------
 Write-Host "`n[0/6] Cleaning dist\..."
@@ -48,15 +48,14 @@ if ($LASTEXITCODE -ne 0) {
 } else {
     $dst = Join-Path $distPlugins "AIVoice2"
     New-Item -ItemType Directory -Path $dst | Out-Null
-    Copy-Item (Join-Path $root "plugins\AIVoiceBridge.Plugin.AIVoice2.dll") $dst
-    $lines = @(
+    Copy-Item (Join-Path $root "plugins\VoiSpeBridge.Plugin.AIVoice2.dll") $dst
+    @(
         "[A.I.VOICE2 Plugin Setup]",
-        "Place the contents of this folder into the plugins\ folder next to AIVoiceBridge.exe.",
+        "Place the contents of this folder into the plugins\ folder next to VoiSpeBridge.exe.",
         "",
         "No additional DLLs required.",
         "Start A.I.VOICE2 first, then connect from the app."
-    )
-    $lines | Set-Content -Encoding UTF8 (Join-Path $dst "README_SETUP.txt")
+    ) | Set-Content -Encoding UTF8 (Join-Path $dst "README_SETUP.txt")
 }
 
 # ---- [3] VOICEPEAK plugin ---------------------------------------
@@ -68,15 +67,14 @@ if ($LASTEXITCODE -ne 0) {
 } else {
     $dst = Join-Path $distPlugins "VOICEPEAK"
     New-Item -ItemType Directory -Path $dst | Out-Null
-    Copy-Item (Join-Path $root "plugins\AIVoiceBridge.Plugin.Voicepeak.dll") $dst
-    $lines = @(
+    Copy-Item (Join-Path $root "plugins\VoiSpeBridge.Plugin.Voicepeak.dll") $dst
+    @(
         "[VOICEPEAK Plugin Setup]",
-        "Place the contents of this folder into the plugins\ folder next to AIVoiceBridge.exe.",
+        "Place the contents of this folder into the plugins\ folder next to VoiSpeBridge.exe.",
         "",
         "No additional DLLs required.",
         "VOICEPEAK is auto-detected at: C:\Program Files\VOICEPEAK\voicepeak.exe"
-    )
-    $lines | Set-Content -Encoding UTF8 (Join-Path $dst "README_SETUP.txt")
+    ) | Set-Content -Encoding UTF8 (Join-Path $dst "README_SETUP.txt")
 }
 
 # ---- [4] A.I.VOICE v1 bridge + plugin --------------------------
@@ -97,27 +95,20 @@ if ($LASTEXITCODE -ne 0) {
 } else {
     $dst = Join-Path $distPlugins "AIVoice"
     New-Item -ItemType Directory -Path $dst | Out-Null
-    Copy-Item (Join-Path $root "plugins\AIVoiceBridge.Plugin.AIVoice.dll") $dst
-    Copy-Item (Join-Path $root "plugins\AI.Talk.Editor.Api.dll")           $dst -ErrorAction SilentlyContinue
+    Copy-Item (Join-Path $root "plugins\VoiSpeBridge.Plugin.AIVoice.dll") $dst
+    Copy-Item (Join-Path $root "plugins\AI.Talk.Editor.Api.dll")          $dst -ErrorAction SilentlyContinue
     if ($av1BridgeOk) {
-        Copy-Item (Join-Path $root "plugins\AIVoiceBridge.AIVoice1Bridge.exe")        $dst
-        Copy-Item (Join-Path $root "plugins\AIVoiceBridge.AIVoice1Bridge.exe.config") $dst
+        Copy-Item (Join-Path $root "plugins\VoiSpeBridge.AIVoice1Bridge.exe")        $dst -ErrorAction SilentlyContinue
+        Copy-Item (Join-Path $root "plugins\VoiSpeBridge.AIVoice1Bridge.exe.config") $dst -ErrorAction SilentlyContinue
     }
-    $lines = @(
+    @(
         "[A.I.VOICE (v1) Plugin Setup]",
-        "Place the contents of this folder into the plugins\ folder next to AIVoiceBridge.exe.",
-        "",
-        "Included files:",
-        "  AIVoiceBridge.Plugin.AIVoice.dll  - plugin",
-        "  AIVoiceBridge.AIVoice1Bridge.exe  - .NET 4.8 bridge process",
-        "  AI.Talk.Editor.Api.dll            - A.I.VOICE v1 Editor API",
+        "Place the contents of this folder into the plugins\ folder next to VoiSpeBridge.exe.",
         "",
         "Requirements:",
         "  - A.I.VOICE v1 must be installed",
-        "  - .NET Framework 4.8 required (included in Windows 10/11)",
-        "  - A.I.VOICE Editor can be started automatically from the bridge"
-    )
-    $lines | Set-Content -Encoding UTF8 (Join-Path $dst "README_SETUP.txt")
+        "  - .NET Framework 4.8 required (included in Windows 10/11)"
+    ) | Set-Content -Encoding UTF8 (Join-Path $dst "README_SETUP.txt")
 }
 
 # ---- [6] CeVIO AI bridge + plugin -------------------------------
@@ -138,14 +129,14 @@ if ($LASTEXITCODE -ne 0) {
 } else {
     $dst = Join-Path $distPlugins "CeVIOAI"
     New-Item -ItemType Directory -Path $dst | Out-Null
-    Copy-Item (Join-Path $root "plugins\AIVoiceBridge.Plugin.CeVIOAI.dll") $dst
+    Copy-Item (Join-Path $root "plugins\VoiSpeBridge.Plugin.CeVIOAI.dll") $dst
     if ($bridgeOk) {
-        Copy-Item (Join-Path $root "plugins\AIVoiceBridge.CeVIOBridge.exe")        $dst
-        Copy-Item (Join-Path $root "plugins\AIVoiceBridge.CeVIOBridge.exe.config") $dst
+        Copy-Item (Join-Path $root "plugins\VoiSpeBridge.CeVIOBridge.exe")        $dst -ErrorAction SilentlyContinue
+        Copy-Item (Join-Path $root "plugins\VoiSpeBridge.CeVIOBridge.exe.config") $dst -ErrorAction SilentlyContinue
     }
-    $lines = @(
+    @(
         "[CeVIO AI Plugin Setup]",
-        "Place the contents of this folder into the plugins\ folder next to AIVoiceBridge.exe.",
+        "Place the contents of this folder into the plugins\ folder next to VoiSpeBridge.exe.",
         "",
         "Additional file required:",
         "  CeVIO.Talk.RemoteService2.dll",
@@ -157,8 +148,7 @@ if ($LASTEXITCODE -ne 0) {
         "Notes:",
         "  - .NET Framework 4.8 required (included in Windows 10/11)",
         "  - CeVIO AI external API allows only 1 app at a time"
-    )
-    $lines | Set-Content -Encoding UTF8 (Join-Path $dst "README_SETUP.txt")
+    ) | Set-Content -Encoding UTF8 (Join-Path $dst "README_SETUP.txt")
 }
 
 # ---- [8] VoisonaTalk plugin ------------------------------------
@@ -170,12 +160,10 @@ if ($LASTEXITCODE -ne 0) {
 } else {
     $dst = Join-Path $distPlugins "VoisonaTalk"
     New-Item -ItemType Directory -Path $dst | Out-Null
-    Copy-Item (Join-Path $root "plugins\AIVoiceBridge.Plugin.VoisonaTalk.dll") $dst
-    $lines = @(
+    Copy-Item (Join-Path $root "plugins\VoiSpeBridge.Plugin.VoisonaTalk.dll") $dst
+    @(
         "[VoisonaTalk Plugin Setup]",
-        "Place the contents of this folder into the plugins\ folder next to AIVoiceBridge.exe.",
-        "",
-        "No additional DLLs required.",
+        "Place the contents of this folder into the plugins\ folder next to VoiSpeBridge.exe.",
         "",
         "Requirements:",
         "  - VoisonaTalk が起動していること",
@@ -183,8 +171,7 @@ if ($LASTEXITCODE -ne 0) {
         "  - アプリ内「音声合成設定 > 接続設定」でメールアドレスと API パスワードを入力し「再接続」を押すこと",
         "",
         "Default port: 32766 (VoisonaTalk のデフォルト値)"
-    )
-    $lines | Set-Content -Encoding UTF8 (Join-Path $dst "README_SETUP.txt")
+    ) | Set-Content -Encoding UTF8 (Join-Path $dst "README_SETUP.txt")
 }
 
 # ---- [9] ZIP packages -------------------------------------------
@@ -192,8 +179,8 @@ if (-not $SkipZip) {
     Write-Host "`n[9/9] Creating ZIP packages..."
 
     $version    = "1.0.0"
-    $appZip     = Join-Path $root "dist\AIVoiceBridge-v$version.zip"
-    $pluginsZip = Join-Path $root "dist\AIVoiceBridge-Plugins-v$version.zip"
+    $appZip     = Join-Path $root "dist\VoiSpeBridge-v$version.zip"
+    $pluginsZip = Join-Path $root "dist\VoiSpeBridge-Plugins-v$version.zip"
 
     if (Test-Path $appZip)     { Remove-Item $appZip }
     if (Test-Path $pluginsZip) { Remove-Item $pluginsZip }
@@ -206,5 +193,5 @@ if (-not $SkipZip) {
 }
 
 Write-Host "`n=== Build complete ===" -ForegroundColor Green
-Write-Host "  App:     dist\app\AIVoiceBridge.exe"
+Write-Host "  App:     dist\app\VoiSpeBridge.exe"
 Write-Host "  Plugins: dist\plugins\"

@@ -1,11 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <LangVersion>12</LangVersion>
-    <AssemblyName>AIVoiceBridge.Plugin.VoisonaTalk</AssemblyName>
-    <RootNamespace>AIVoiceBridge.Plugin.VoisonaTalk</RootNamespace>
+    <AssemblyName>VoiSpeBridge.Plugin.VoisonaTalk</AssemblyName>
+    <RootNamespace>VoiSpeBridge.Plugin.VoisonaTalk</RootNamespace>
     <!-- プラグイン出力先（ソリューションルートの plugins/ フォルダ） -->
     <AppPluginsDir>$(MSBuildThisFileDirectory)..\..\..\plugins\</AppPluginsDir>
   </PropertyGroup>

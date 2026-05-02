@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace AIVoiceBridge.App.ViewModels;
+namespace VoiSpeBridge.App.ViewModels;
 
 /// <summary>
 /// 感情・スタイルパラメータの1項目を表すバインド可能な ViewModel。

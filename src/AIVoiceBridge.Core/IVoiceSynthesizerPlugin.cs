@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace AIVoiceBridge.Core;
+namespace VoiSpeBridge.Core;
 
 /// <summary>
 /// 合成音声プラグインのインターフェース。

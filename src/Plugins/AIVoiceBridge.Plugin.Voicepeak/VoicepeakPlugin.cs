@@ -1,13 +1,13 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using AIVoiceBridge.Core;
+using VoiSpeBridge.Core;
 
-namespace AIVoiceBridge.Plugin.Voicepeak;
+namespace VoiSpeBridge.Plugin.Voicepeak;
 
 /// <summary>
 /// VOICEPEAK プラグイン。

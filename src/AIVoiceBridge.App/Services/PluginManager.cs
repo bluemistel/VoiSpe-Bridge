@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using AIVoiceBridge.Core;
+using VoiSpeBridge.Core;
 
-namespace AIVoiceBridge.App.Services;
+namespace VoiSpeBridge.App.Services;
 
 /// <summary>
 /// pluginsフォルダ内のDLLを走査し、IVoiceSynthesizerPlugin 実装を動的に読み込む。

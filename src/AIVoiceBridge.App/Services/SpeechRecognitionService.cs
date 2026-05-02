@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
@@ -10,7 +10,7 @@ using Whisper.net;
 using Whisper.net.Ggml;
 using Whisper.net.LibraryLoader;
 
-namespace AIVoiceBridge.App.Services;
+namespace VoiSpeBridge.App.Services;
 
 public enum RecognitionModelType
 {
@@ -148,6 +148,44 @@ public sealed class SpeechRecognitionService : IDisposable
         _waveIn.DataAvailable += OnDataAvailable;
 
         StatusChanged?.Invoke(this, "音声認識準備完了");
+    }
+
+    // ========== ブラウザ認識モード用（Whisper 不使用） ==========
+
+    /// <summary>
+    /// Whisper モデルをアンロードしてメモリを解放し、NAudio レベル監視のみ初期化する。
+    /// ブラウザ音声認識エンジン選択時に使用。
+    /// </summary>
+    public Task InitializeLevelMonitorAsync()
+    {
+        // Whisper リソースを解放してメモリを節約
+        _processor?.Dispose();
+        _processor = null;
+        _factory?.Dispose();
+        _factory = null;
+
+        // NAudio のみ再初期化（既存の _waveIn があれば置き換え）
+        _waveIn?.Dispose();
+        _waveIn = new WaveInEvent
+        {
+            WaveFormat        = new WaveFormat(SampleRate, 16, 1),
+            BufferMilliseconds = 50,
+        };
+        _waveIn.DataAvailable += OnDataAvailable;
+
+        StatusChanged?.Invoke(this, "ブラウザ音声認識準備完了");
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Whisper 推論ループなしでマイク入力のレベル監視のみ開始する（ブラウザ認識モード用）。
+    /// </summary>
+    public void StartLevelMonitorOnly()
+    {
+        if (_isListening || _waveIn == null) return;
+        // _cts / _processingTask は起動しない（Whisper 推論不要）
+        _waveIn.StartRecording();
+        _isListening = true;
     }
 
     // ========== 開始/停止 ==========
@@ -311,7 +349,7 @@ public sealed class SpeechRecognitionService : IDisposable
     {
         var dir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "AIVoiceBridge", "models");
+            "VoiSpeBridge", "models");
         Directory.CreateDirectory(dir);
         return Path.Combine(dir, $"ggml-{type.ToString().ToLower()}.bin");
     }

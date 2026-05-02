@@ -1,10 +1,10 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
     <OutputType>Exe</OutputType>
-    <AssemblyName>AIVoiceBridge.CeVIOBridge</AssemblyName>
-    <RootNamespace>AIVoiceBridge.CeVIOBridge</RootNamespace>
+    <AssemblyName>VoiSpeBridge.CeVIOBridge</AssemblyName>
+    <RootNamespace>VoiSpeBridge.CeVIOBridge</RootNamespace>
     <Nullable>enable</Nullable>
     <LangVersion>12</LangVersion>
     <AppPluginsDir>$(MSBuildThisFileDirectory)..\..\plugins\</AppPluginsDir>

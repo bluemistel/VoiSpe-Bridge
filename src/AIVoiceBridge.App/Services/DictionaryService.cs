@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
 
-namespace AIVoiceBridge.App.Services;
+namespace VoiSpeBridge.App.Services;
 
 public sealed class DictionaryPreset
 {
@@ -35,7 +35,7 @@ public sealed class DictionaryService
 {
     private static readonly string FilePath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "AIVoiceBridge", "dictionary_presets.json");
+        "VoiSpeBridge", "dictionary_presets.json");
 
     private static readonly JsonSerializerOptions JsonOpts = new() { WriteIndented = true };
 

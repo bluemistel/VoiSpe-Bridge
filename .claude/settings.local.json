@@ -37,7 +37,14 @@
       "Bash(where gh *)",
       "Bash(where.exe gh *)",
       "Bash(powershell.exe -Command \"Stop-Process -Id 42516 -Force -ErrorAction SilentlyContinue; Start-Sleep -Milliseconds 500\")",
-      "WebFetch(domain:manual.voisona.com)"
+      "WebFetch(domain:manual.voisona.com)",
+      "Bash(powershell -Command \"[System.Reflection.Assembly]::LoadFrom\\('C:\\\\Users\\\\skki7\\\\.nuget\\\\packages\\\\org.k2fsa.sherpa.onnx\\\\1.13.0\\\\lib\\\\net8.0\\\\sherpa-onnx.dll'\\).GetTypes\\(\\) | Select-Object -ExpandProperty FullName\")",
+      "Bash(powershell -Command \"Get-ChildItem 'C:\\\\Users\\\\skki7\\\\.nuget\\\\packages\\\\org.k2fsa.sherpa.onnx\\\\1.13.0' -Recurse | Select-Object FullName\")",
+      "WebFetch(domain:k2-fsa.github.io)",
+      "WebFetch(domain:api.github.com)",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File \"build.ps1\")",
+      "Bash(powershell.exe -Command 'Get-Content '\\\\''C:\\\\AppDevelop\\\\A.I.VOICE-Bridge\\\\src\\\\AIVoiceBridge.App\\\\AIVoiceBridge.App.csproj'\\\\'' -Raw | Select-String -Pattern '\\\\''plugin|Plugin|Content|Copy'\\\\'' -AllMatches | ForEach-Object { $_.Matches } | Select-Object -ExpandProperty Value')",
+      "Bash(powershell.exe -Command \"Get-Content 'C:\\\\AppDevelop\\\\A.I.VOICE-Bridge\\\\src\\\\AIVoiceBridge.App\\\\AIVoiceBridge.App.csproj' -Raw\")"
     ]
   }
 }

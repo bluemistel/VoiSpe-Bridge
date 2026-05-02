@@ -1,8 +1,8 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 
-namespace AIVoiceBridge.App.Converters;
+namespace VoiSpeBridge.App.Converters;
 
 /// <summary>
 /// WPF の PasswordBox は Password プロパティが依存関係プロパティではないため

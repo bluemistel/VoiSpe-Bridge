@@ -1,11 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <LangVersion>12</LangVersion>
-    <AssemblyName>AIVoiceBridge.Plugin.AIVoice2</AssemblyName>
-    <RootNamespace>AIVoiceBridge.Plugin.AIVoice2</RootNamespace>
+    <AssemblyName>VoiSpeBridge.Plugin.AIVoice2</AssemblyName>
+    <RootNamespace>VoiSpeBridge.Plugin.AIVoice2</RootNamespace>
     <AppPluginsDir>$(MSBuildThisFileDirectory)..\..\..\plugins\</AppPluginsDir>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>

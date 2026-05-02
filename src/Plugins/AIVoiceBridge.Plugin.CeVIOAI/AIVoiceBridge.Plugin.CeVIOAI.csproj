@@ -1,11 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <LangVersion>12</LangVersion>
-    <AssemblyName>AIVoiceBridge.Plugin.CeVIOAI</AssemblyName>
-    <RootNamespace>AIVoiceBridge.Plugin.CeVIOAI</RootNamespace>
+    <AssemblyName>VoiSpeBridge.Plugin.CeVIOAI</AssemblyName>
+    <RootNamespace>VoiSpeBridge.Plugin.CeVIOAI</RootNamespace>
     <AppPluginsDir>$(MSBuildThisFileDirectory)..\..\..\plugins\</AppPluginsDir>
     <DefaultItemExcludes>$(DefaultItemExcludes);lib\**</DefaultItemExcludes>
   </PropertyGroup>
