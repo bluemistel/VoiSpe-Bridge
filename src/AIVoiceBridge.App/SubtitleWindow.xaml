@@ -1,4 +1,4 @@
-﻿<Window x:Class="VoiSpeBridge.App.SubtitleWindow"
+<Window x:Class="VoiSpeBridge.App.SubtitleWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ctrl="clr-namespace:VoiSpeBridge.App.Controls"
@@ -6,56 +6,72 @@
         Width="900" Height="180"
         MinWidth="300" MinHeight="80"
         WindowStyle="None"
-        AllowsTransparency="False"
-        Background="#FF00FF00"
-        ResizeMode="CanResizeWithGrip"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="CanResize"
         Topmost="True"
         ShowInTaskbar="True">
 
-  <!-- 全体がグリーンバック。DragMove() はコードビハインドで実装。
-       OBS 等のキャプチャソフトで「ウィンドウキャプチャ」→ クロマキー(#00FF00) を設定してください。 -->
+  <!--
+    AllowsTransparency="True" + Background="Transparent" により
+    OBS の「ウィンドウキャプチャ」でクロマキー不要で字幕を合成できます。
+    透明エリアはクリックスルーになるため、操作は以下で行います。
+      ドラッグ移動 : 字幕テキストまたは左上グリップをドラッグ
+      ウィンドウ操作: 右クリック → コンテキストメニュー
+  -->
   <Grid>
 
-    <!-- ── ドラッグ用ハンドル（上端 28px・半透明黒）────
-         OBS ではこの帯をクロップして除外してください。
-         このエリアでマウスドラッグするとウィンドウを移動できます。 -->
-    <Border x:Name="DragHandle"
-            Height="28"
-            VerticalAlignment="Top"
-            Background="#BB000000"
-            Cursor="SizeAll"
-            MouseLeftButtonDown="OnDragHandleMouseDown">
-      <Grid>
-        <TextBlock Text="配信用字幕  ／  ドラッグで移動  ／  右下角でリサイズ"
-                   Foreground="#88FFFFFF"
-                   FontSize="10"
-                   VerticalAlignment="Center"
-                   HorizontalAlignment="Center"/>
-        <Button Content="✕"
-                Width="28" Height="28"
-                HorizontalAlignment="Right"
-                Background="Transparent"
-                Foreground="#AAFFFFFF"
-                BorderThickness="0"
-                FontSize="13"
-                Cursor="Hand"
-                Click="OnCloseClick"
-                ToolTip="字幕ウィンドウを非表示にする"/>
-      </Grid>
-    </Border>
-
-    <!-- ── 字幕テキスト（グリーンバック領域）──── -->
+    <!-- ── 字幕テキスト ──── -->
     <ctrl:OutlinedTextBlock
         x:Name="SubtitleText"
         HorizontalAlignment="Center"
         VerticalAlignment="Center"
-        Margin="24,36,24,12"
+        Margin="24,12,24,12"
         Text="{Binding DisplayText}"
         FontFamilyName="{Binding FontFamilyName}"
         FontSize="{Binding FontSize}"
         FillBrush="{Binding FontBrush}"
         StrokeBrush="{Binding StrokeBrush}"
-        StrokeThickness="{Binding StrokeThickness}"/>
+        StrokeThickness="{Binding StrokeThickness}"
+        MouseLeftButtonDown="OnTextMouseDown"
+        ContextMenuOpening="OnContextMenuOpening">
+      <ctrl:OutlinedTextBlock.ContextMenu>
+        <ContextMenu>
+          <MenuItem Header="字幕ウィンドウを非表示" Click="OnCloseClick"/>
+          <Separator/>
+          <MenuItem x:Name="TopmostMenuItem" Header="最前面に固定" IsCheckable="True"
+                    IsChecked="True" Click="OnTopmostToggle"/>
+        </ContextMenu>
+      </ctrl:OutlinedTextBlock.ContextMenu>
+    </ctrl:OutlinedTextBlock>
+
+    <!-- ── 常時表示の左上グリップ（半透明）────
+         テキストが非表示中でもウィンドウを掴める。
+         Background が非透明なので AllowsTransparency でもクリックを受け取れる。 -->
+    <Border x:Name="DragGrip"
+            Width="18" Height="18"
+            HorizontalAlignment="Left" VerticalAlignment="Top"
+            Margin="4,4,0,0"
+            Background="#40FFFFFF"
+            CornerRadius="3"
+            Cursor="SizeAll"
+            MouseLeftButtonDown="OnDragHandleMouseDown"
+            ContextMenuOpening="OnContextMenuOpening"
+            ToolTip="ドラッグで移動 / 右クリックで操作">
+      <Border.ContextMenu>
+        <ContextMenu>
+          <MenuItem Header="字幕ウィンドウを非表示" Click="OnCloseClick"/>
+          <Separator/>
+          <MenuItem x:Name="TopmostMenuItemGrip" Header="最前面に固定" IsCheckable="True"
+                    IsChecked="True" Click="OnTopmostToggle"/>
+        </ContextMenu>
+      </Border.ContextMenu>
+      <TextBlock Text="⠿"
+                 Foreground="#AAFFFFFF"
+                 FontSize="10"
+                 HorizontalAlignment="Center"
+                 VerticalAlignment="Center"/>
+    </Border>
 
   </Grid>
 </Window>

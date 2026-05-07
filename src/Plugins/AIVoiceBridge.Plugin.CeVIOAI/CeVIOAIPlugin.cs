@@ -15,7 +15,7 @@ namespace VoiSpeBridge.Plugin.CeVIOAI;
 /// .NET 8 では動作しないため、.NET Framework 4.8 製ブリッジプロセス経由で通信する。
 ///
 /// 動作フロー:
-///   1. ConnectAsync(): AIVoiceBridge.CeVIOBridge.exe --list-casts でキャスト一覧を取得
+///   1. ConnectAsync(): VoiSpeBridge.CeVIOBridge.exe --list-casts でキャスト一覧を取得
 ///   2. RefreshEmotionsAsync(): --list-emotions <cast> で感情一覧を取得
 ///   3. SynthesizeAsync(): --speak コマンドで WAV を生成しバイト列を返す
 ///   4. MainViewModel が WAV を AudioOutputService（選択中の出力デバイス）で再生
@@ -52,7 +52,7 @@ public sealed class CeVIOAIPlugin : IVoiceSynthesizerPlugin, IPluginWithEmotions
         {
             _bridgePath = FindBridgePath()
                 ?? throw new InvalidOperationException(
-                    "AIVoiceBridge.CeVIOBridge.exe が見つかりません。\n" +
+                    "VoiSpeBridge.CeVIOBridge.exe が見つかりません。\n" +
                     "ソリューションをビルドしてブリッジを生成してください。");
 
             var output = RunBridge(_bridgePath, ["--list-casts"], timeoutMs: 20000);
@@ -196,7 +196,7 @@ public sealed class CeVIOAIPlugin : IVoiceSynthesizerPlugin, IPluginWithEmotions
         var pluginDir = Path.GetDirectoryName(typeof(CeVIOAIPlugin).Assembly.Location);
         if (pluginDir == null) return null;
 
-        var path = Path.Combine(pluginDir, "AIVoiceBridge.CeVIOBridge.exe");
+        var path = Path.Combine(pluginDir, "VoiSpeBridge.CeVIOBridge.exe");
         return File.Exists(path) ? path : null;
     }
 

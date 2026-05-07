@@ -5,8 +5,10 @@ using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media;
 using VoiSpeBridge.App.Services;
 using VoiSpeBridge.Core;
 
@@ -32,7 +34,11 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     private readonly AudioOutputService _audioOutput;
     private readonly SettingsService _settingsService;
     private readonly DictionaryService _dictionaryService;
-    private CancellationTokenSource? _speakCts;
+    // ---- 発声キュー（最大10件、古いものを破棄、逐次処理）----
+    private readonly Channel<(string Text, bool ClearRecognized)> _speakChannel;
+    private CancellationTokenSource? _speakCts;       // 現在処理中アイテムのキャンセル
+    private readonly CancellationTokenSource _speakLoopCts = new(); // ループ停止用
+    private Task? _speakLoopTask;
 
     /// <summary>
     /// Set by the View to open the preset editor dialog.
@@ -206,6 +212,29 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
                 _reazonRecognition.SilenceDurationMs = value;
             }
         }
+    }
+
+    // ---- 誤検出フィルタ ----
+
+    private int _minActiveSpeechMs = 200;
+    public int MinActiveSpeechMs
+    {
+        get => _minActiveSpeechMs;
+        set
+        {
+            if (Set(ref _minActiveSpeechMs, value))
+            {
+                _recognition.MinActiveSpeechMs      = value;
+                _reazonRecognition.MinActiveSpeechMs = value;
+            }
+        }
+    }
+
+    private int _minRecognizedTextLength = 1;
+    public int MinRecognizedTextLength
+    {
+        get => _minRecognizedTextLength;
+        set => Set(ref _minRecognizedTextLength, Math.Max(1, value));
     }
 
     private RecognitionModelType _selectedModel = RecognitionModelType.LargeV3Turbo;
@@ -383,6 +412,80 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
+    // ---- 声量プリセット自動切り替え ----
+
+    private bool _volumePresetEnabled;
+    public bool VolumePresetEnabled
+    {
+        get => _volumePresetEnabled;
+        set => Set(ref _volumePresetEnabled, value);
+    }
+
+    private double _loudVolumeThresholdDb = -20.0;
+    public double LoudVolumeThresholdDb
+    {
+        get => _loudVolumeThresholdDb;
+        set => Set(ref _loudVolumeThresholdDb, Math.Round(value, 0));
+    }
+
+    // キャスト名を文字列で保持し、キャスト一覧が更新されたタイミングで CastInfo に解決する
+    private string _normalVolumeCastName = "";
+    private string _loudVolumeCastName   = "";
+
+    /// <summary>通常声量時に使用するキャスト。コンボボックスにバインド。</summary>
+    private CastInfo? _normalVolumeCast;
+    public CastInfo? NormalVolumeCast
+    {
+        get => _normalVolumeCast;
+        set
+        {
+            if (Set(ref _normalVolumeCast, value))
+                _normalVolumeCastName = value?.Name ?? "";
+        }
+    }
+
+    /// <summary>音量大（叫び声等）時に使用するキャスト。コンボボックスにバインド。</summary>
+    private CastInfo? _loudVolumeCast;
+    public CastInfo? LoudVolumeCast
+    {
+        get => _loudVolumeCast;
+        set
+        {
+            if (Set(ref _loudVolumeCast, value))
+                _loudVolumeCastName = value?.Name ?? "";
+        }
+    }
+
+    // ---- 音量大キャスト専用の音声パラメータ ----
+
+    private double _loudCastSpeed = 1.0;
+    public double LoudCastSpeed
+    {
+        get => _loudCastSpeed;
+        set => Set(ref _loudCastSpeed, Math.Round(value, 2));
+    }
+
+    private double _loudCastVolume = 1.0;
+    public double LoudCastVolume
+    {
+        get => _loudCastVolume;
+        set => Set(ref _loudCastVolume, Math.Round(value, 2));
+    }
+
+    private double _loudCastPitch = 1.0;
+    public double LoudCastPitch
+    {
+        get => _loudCastPitch;
+        set => Set(ref _loudCastPitch, Math.Round(value, 2));
+    }
+
+    private double _loudCastIntonation = 1.0;
+    public double LoudCastIntonation
+    {
+        get => _loudCastIntonation;
+        set => Set(ref _loudCastIntonation, Math.Round(value, 2));
+    }
+
     // ---- コマンド ----
 
     // ---- 配信用字幕 ----
@@ -433,6 +536,11 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         ReconnectPluginCommand     = new RelayCommand(_ => _ = OnPluginChangedAsync());
         ToggleSubtitleWindowCommand = new RelayCommand(_ => ShowSubtitleWindow?.Invoke());
 
+        // 発声キュー（最大10件・古いものを自動破棄）
+        _speakChannel = Channel.CreateBounded<(string, bool)>(
+            new BoundedChannelOptions(10) { FullMode = BoundedChannelFullMode.DropOldest });
+        _speakLoopTask = RunSpeakLoopAsync(_speakLoopCts.Token);
+
         LoadOutputDevices();
         _pluginManager.LoadPlugins();
         _dictionaryService.Load();
@@ -446,6 +554,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _voiceTriggerDb = s.VoiceTriggerDb;
         _noiseGateDb = s.NoiseGateDb;
         _silenceDurationMs = s.SilenceDurationMs;
+        _minActiveSpeechMs = s.MinActiveSpeechMs;
+        _minRecognizedTextLength = s.MinRecognizedTextLength;
 
         // 音声パラメータ
         _speed = s.Speed;
@@ -485,6 +595,41 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
         // プラグイン（設定のプラグイン名で初回接続）
         PopulatePlugins(s.SelectedPluginName);
+
+        // 声量キャスト切り替え設定。キャスト名を保存し、OnPluginChangedAsync でキャスト一覧が
+        // 揃った後に CastInfo へ解決する（起動時はプラグイン接続前のため名前のみ保持）。
+        _volumePresetEnabled    = s.VolumePresetEnabled;
+        _loudVolumeThresholdDb  = s.LoudVolumeThresholdDb;
+        _normalVolumeCastName   = s.NormalVolumeCastName;
+        _loudVolumeCastName     = s.LoudVolumeCastName;
+        _loudCastSpeed          = s.LoudCastSpeed;
+        _loudCastVolume         = s.LoudCastVolume;
+        _loudCastPitch          = s.LoudCastPitch;
+        _loudCastIntonation     = s.LoudCastIntonation;
+
+        // 配信用字幕ウィンドウ設定
+        if (!string.IsNullOrEmpty(s.SubtitleFontFamily))
+            Subtitle.FontFamilyName = s.SubtitleFontFamily;
+        if (s.SubtitleFontSize > 0)
+            Subtitle.FontSize = s.SubtitleFontSize;
+        try
+        {
+            if (!string.IsNullOrEmpty(s.SubtitleFontColorHex))
+                Subtitle.FontColor = (Color)ColorConverter.ConvertFromString(s.SubtitleFontColorHex)!;
+        }
+        catch { /* 不正値は無視してデフォルトを維持 */ }
+        try
+        {
+            if (!string.IsNullOrEmpty(s.SubtitleStrokeColorHex))
+                Subtitle.StrokeColor = (Color)ColorConverter.ConvertFromString(s.SubtitleStrokeColorHex)!;
+        }
+        catch { /* 不正値は無視してデフォルトを維持 */ }
+        if (s.SubtitleStrokeThickness > 0)
+            Subtitle.StrokeThickness = s.SubtitleStrokeThickness;
+        if (s.SubtitleWindowWidth > 0)
+            Subtitle.WindowWidth = s.SubtitleWindowWidth;
+        if (s.SubtitleWindowHeight > 0)
+            Subtitle.WindowHeight = s.SubtitleWindowHeight;
     }
 
     private void SaveSettings()
@@ -504,6 +649,23 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             Intonation               = _intonation,
             SelectedOutputDeviceName = _selectedOutputDevice?.Name,
             PluginConnectionSettings = CollectAllPluginConnectionSettings(),
+            SubtitleFontFamily       = Subtitle.FontFamilyName,
+            SubtitleFontSize         = Subtitle.FontSize,
+            SubtitleFontColorHex     = Subtitle.FontColor.ToString(),
+            SubtitleStrokeColorHex   = Subtitle.StrokeColor.ToString(),
+            SubtitleStrokeThickness  = Subtitle.StrokeThickness,
+            SubtitleWindowWidth      = Subtitle.WindowWidth,
+            SubtitleWindowHeight     = Subtitle.WindowHeight,
+            VolumePresetEnabled      = _volumePresetEnabled,
+            NormalVolumeCastName     = _normalVolumeCastName,
+            LoudVolumeCastName       = _loudVolumeCastName,
+            LoudVolumeThresholdDb    = _loudVolumeThresholdDb,
+            LoudCastSpeed            = _loudCastSpeed,
+            LoudCastVolume           = _loudCastVolume,
+            LoudCastPitch            = _loudCastPitch,
+            LoudCastIntonation       = _loudCastIntonation,
+            MinActiveSpeechMs        = _minActiveSpeechMs,
+            MinRecognizedTextLength  = _minRecognizedTextLength,
         });
     }
 
@@ -576,6 +738,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
                 _reazonRecognition.NoiseGateDb       = (float)_noiseGateDb;
                 _reazonRecognition.VoiceTriggerDb    = (float)_voiceTriggerDb;
                 _reazonRecognition.SilenceDurationMs = _silenceDurationMs;
+                _reazonRecognition.MinActiveSpeechMs = _minActiveSpeechMs;
             }
             catch (Exception ex)
             {
@@ -601,6 +764,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
                 _recognition.NoiseGateDb       = (float)_noiseGateDb;
                 _recognition.VoiceTriggerDb    = (float)_voiceTriggerDb;
                 _recognition.SilenceDurationMs = _silenceDurationMs;
+                _recognition.MinActiveSpeechMs = _minActiveSpeechMs;
             }
             catch (Exception ex)
             {
@@ -773,6 +937,9 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     private async Task RebuildProcessorAsync()
     {
+        // Whisper エンジン以外は initial_prompt を使用しないため再構築不要
+        if (_selectedEngine != RecognitionEngine.Whisper) return;
+
         IsModelLoading = true;
         try { await _recognition.InitializeAsync(_selectedModel); }
         catch (Exception ex) { StatusText = $"プロセッサ再構築に失敗: {ex.Message}"; }
@@ -828,6 +995,49 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     private void OnTextRecognized(object? sender, string text)
     {
+        // ---- 誤検出フィルタ: 認識テキスト最小文字数チェック ----
+        // スペースを除いた文字数が閾値未満なら「え」などの1文字誤検出として破棄する。
+        if (text.Replace(" ", "").Length < _minRecognizedTextLength)
+            return;
+
+        // ---- 声量キャスト自動切り替え ----
+        // 発話バッファの平均音量に基づいてキャスト（ボイス）を切り替える。
+        // 音量計測は FlushSpeechBuffer で事前に行われているため
+        // LastSpeechVolumeDb を参照するだけで OK（非 UI スレッドから安全に読める）。
+        if (_volumePresetEnabled && _selectedPlugin != null)
+        {
+            var volumeDb = _selectedEngine switch
+            {
+                RecognitionEngine.Whisper      => _recognition.LastSpeechVolumeDb,
+                RecognitionEngine.ReazonSpeech => _reazonRecognition.LastSpeechVolumeDb,
+                _                              => -96f,
+            };
+            bool isLoudMode = volumeDb >= (float)_loudVolumeThresholdDb;
+            var targetCast = isLoudMode ? _loudVolumeCast : _normalVolumeCast;
+
+            // 現在と異なるキャストのときだけ切り替え（不要な API 呼び出しを防ぐ）
+            if (targetCast != null && _selectedCast?.Name != targetCast.Name)
+            {
+                _selectedCast = targetCast;
+                _selectedPlugin.CurrentCast = targetCast.Name;
+
+                // 声量に応じた音声パラメータを適用
+                _selectedPlugin.Options = new SynthesisOptions
+                {
+                    Speed      = isLoudMode ? _loudCastSpeed      : _speed,
+                    Volume     = isLoudMode ? _loudCastVolume     : _volume,
+                    Pitch      = isLoudMode ? _loudCastPitch      : _pitch,
+                    Intonation = isLoudMode ? _loudCastIntonation : _intonation,
+                };
+
+                Application.Current?.Dispatcher.BeginInvoke(() =>
+                {
+                    OnPropertyChanged(nameof(SelectedCast));
+                    OnPropertyChanged(nameof(PluginCastLabel));
+                });
+            }
+        }
+
         text = _dictionaryService.Apply(text);
         Application.Current?.Dispatcher.BeginInvoke(() =>
         {
@@ -855,6 +1065,14 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
                 SelectedCast = AvailableCasts.FirstOrDefault();
                 OnPropertyChanged(nameof(IsCastSelectable));
                 OnPropertyChanged(nameof(PluginCastLabel));
+
+                // キャスト一覧が更新されたら声量キャストの参照を名前で再マッチング
+                _normalVolumeCast = string.IsNullOrEmpty(_normalVolumeCastName) ? null
+                    : AvailableCasts.FirstOrDefault(c => c.Name == _normalVolumeCastName);
+                _loudVolumeCast   = string.IsNullOrEmpty(_loudVolumeCastName)   ? null
+                    : AvailableCasts.FirstOrDefault(c => c.Name == _loudVolumeCastName);
+                OnPropertyChanged(nameof(NormalVolumeCast));
+                OnPropertyChanged(nameof(LoudVolumeCast));
             });
 
             SyncOptions();
@@ -906,66 +1124,108 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
-    public async Task SpeakAsync(string text, bool clearRecognized = false)
+    /// <summary>
+    /// テキストを発声キューに追加する（最大10件・超過時は古いものを自動破棄）。
+    /// 発声は RunSpeakLoopAsync が逐次処理する。ブリッジのビジー衝突を防ぐ。
+    /// </summary>
+    public Task SpeakAsync(string text, bool clearRecognized = false)
     {
-        if (string.IsNullOrWhiteSpace(text) || _selectedPlugin == null) return;
+        if (string.IsNullOrWhiteSpace(text) || _selectedPlugin == null) return Task.CompletedTask;
 
         if (!_selectedPlugin.IsConnected)
         {
             StatusText = $"{_selectedPlugin.Name} が接続されていません。プラグインを再接続してください。";
-            return;
+            return Task.CompletedTask;
         }
 
-        _speakCts?.Cancel();
-        _speakCts = new CancellationTokenSource();
-        var ct = _speakCts.Token;
-
-        IsSpeaking = true;
-        StatusText = "発声中...";
-
-        // A.I.VOICE2 への送信と同時に認識テキストをクリア（発声完了を待たない）
-        if (clearRecognized)
-            Application.Current?.Dispatcher.BeginInvoke(() => RecognizedText = string.Empty);
-
-        try
+        _speakChannel.Writer.TryWrite((text, clearRecognized));
+        Application.Current?.Dispatcher.BeginInvoke(() =>
         {
-            var wavData = await _selectedPlugin.SynthesizeAsync(text);
+            IsSpeaking = true;
+            StatusText = "発声待機中...";
+        });
+        return Task.CompletedTask;
+    }
 
-            if (ct.IsCancellationRequested) return;
+    /// <summary>キューを逐次処理するバックグラウンドループ。</summary>
+    private async Task RunSpeakLoopAsync(CancellationToken loopCt)
+    {
+        await foreach (var (text, clearRecognized) in _speakChannel.Reader.ReadAllAsync(loopCt))
+        {
+            // アイテム単位キャンセル（StopSpeaking や loopCt と連動）
+            using var itemCts = CancellationTokenSource.CreateLinkedTokenSource(loopCt);
+            _speakCts = itemCts;
 
-            if (wavData != null)
-                await _audioOutput.PlayWavAsync(wavData);
-            else
-                await _selectedPlugin.SpeakAsync(text);
+            Application.Current?.Dispatcher.BeginInvoke(() =>
+            {
+                IsSpeaking = true;
+                StatusText = "発声中...";
+            });
 
-            if (!ct.IsCancellationRequested)
+            if (clearRecognized)
+                Application.Current?.Dispatcher.BeginInvoke(() => RecognizedText = string.Empty);
+
+            try
+            {
+                await SpeakInternalAsync(text, itemCts.Token);
+
+                if (!itemCts.IsCancellationRequested)
+                {
+                    Application.Current?.Dispatcher.BeginInvoke(() =>
+                    {
+                        History.Insert(0, new HistoryEntry(DateTime.Now, text));
+                        if (History.Count > 200) History.RemoveAt(200);
+                    });
+                }
+            }
+            catch (OperationCanceledException) { /* キャンセル済み → 次のアイテムへ */ }
+            catch (Exception ex)
+            {
+                Application.Current?.Dispatcher.BeginInvoke(() =>
+                    StatusText = $"発声エラー [{ex.GetType().Name}]: {ex.Message}");
+            }
+            finally
+            {
+                _speakCts = null;
+            }
+
+            // キューが空になったら待機状態へ
+            if (_speakChannel.Reader.Count == 0)
             {
                 Application.Current?.Dispatcher.BeginInvoke(() =>
                 {
-                    History.Insert(0, new HistoryEntry(DateTime.Now, text));
-                    if (History.Count > 200) History.RemoveAt(200);
+                    IsSpeaking = false;
+                    StatusText = IsListening ? "認識中...（話しかけてください）" : "待機中";
                 });
             }
         }
-        catch (OperationCanceledException) { }
-        catch (Exception ex)
-        {
-            StatusText = $"発声エラー [{ex.GetType().Name}]: {ex.Message}";
-            return;
-        }
-        finally
-        {
-            IsSpeaking = false;
-        }
 
-        if (!ct.IsCancellationRequested)
-            StatusText = IsListening ? "認識中...（話しかけてください）" : "待機中";
+        // ループ終了（Dispose 時）
+        Application.Current?.Dispatcher.BeginInvoke(() => IsSpeaking = false);
+    }
+
+    /// <summary>1アイテムの合成・再生を行う（RunSpeakLoopAsync から呼ばれる）。</summary>
+    private async Task SpeakInternalAsync(string text, CancellationToken ct)
+    {
+        if (_selectedPlugin == null) return;
+
+        var wavData = await _selectedPlugin.SynthesizeAsync(text);
+        if (ct.IsCancellationRequested) return;
+
+        if (wavData != null)
+            await _audioOutput.PlayWavAsync(wavData);
+        else
+            await _selectedPlugin.SpeakAsync(text);
     }
 
     private void StopSpeaking()
     {
+        // キュー内の待機アイテムを全て破棄
+        while (_speakChannel.Reader.TryRead(out _)) { }
+        // 現在処理中のアイテムをキャンセル
         _speakCts?.Cancel();
         _audioOutput.Stop();
+        IsSpeaking = false;
     }
 
     private void SyncOptions()
@@ -1109,8 +1369,17 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     public void Dispose()
     {
+        // 1. キューをクリアして現在の合成をキャンセル
         StopSpeaking();
-        _speakCts?.Dispose();
+
+        // 2. 発声ループを停止してチャンネルを完結
+        _speakLoopCts.Cancel();
+        _speakChannel.Writer.TryComplete();
+
+        // 3. ループ終了を待機（最大 2 秒）
+        try { _speakLoopTask?.Wait(TimeSpan.FromSeconds(2)); } catch { }
+        _speakLoopCts.Dispose();
+
         SaveSettings();
         _recognition.Dispose();
         _browserRecognition.Dispose();

@@ -50,6 +50,13 @@ public sealed class ReazonSpeechRecognitionService : IDisposable
     public int   SilenceDurationMs { get; set; } = 800;
 
     /// <summary>
+    /// 誤検出フィルタ: 発話アクティブ区間（VoiceTriggerDb 超過中）が
+    /// この時間未満なら認識を破棄する。擦れ音など瞬間的なノイズを除外するために使用。
+    /// デフォルト 200ms。
+    /// </summary>
+    public int MinActiveSpeechMs { get; set; } = 200;
+
+    /// <summary>
     /// 音声検出前に遡って取り込むプリバッファの長さ（ミリ秒）。
     /// 発話冒頭（子音・無声区間）がトリガー前に存在する場合に補完する。
     /// デフォルト 500ms。0 で無効。
@@ -76,6 +83,7 @@ public sealed class ReazonSpeechRecognitionService : IDisposable
     private readonly List<short>   _speechBuffer = new(SampleRate * 30);
     private bool                   _isSpeaking;
     private DateTime               _lastSpeechTime;
+    private DateTime               _speechStartTime;
 
     // ---- プリバッファ（音声検出前の音声を遡って取り込む）----
     // キューに 50ms チャンクを積み、PreRollMs 分を超えた古いチャンクを捨てるリングバッファ。
@@ -85,6 +93,12 @@ public sealed class ReazonSpeechRecognitionService : IDisposable
     // ---- 状態 ----
 
     public bool IsListening  => _isListening;
+
+    /// <summary>
+    /// 直前の発話バッファ全体の平均 RMS を dB 変換した値。
+    /// FlushSpeechBuffer 呼び出し後に更新される。声量プリセット切り替えに使用。
+    /// </summary>
+    public float LastSpeechVolumeDb { get; private set; } = -96f;
 
     private static readonly string[] RequiredFiles =
         ["tokens.txt", "README.md"];  // 最低限の存在確認
@@ -112,7 +126,10 @@ public sealed class ReazonSpeechRecognitionService : IDisposable
             await DownloadAndExtractModelAsync(ct);
         }
 
-        LoadRecognizer();
+        // OfflineRecognizer の初期化は重い同期処理のため
+        // UI スレッドをブロックしないよう Task.Run で実行する
+        StatusChanged?.Invoke(this, "ReazonSpeech モデルを読み込み中...");
+        await Task.Run(() => LoadRecognizer(), ct);
         StatusChanged?.Invoke(this, "ReazonSpeech 準備完了");
     }
 
@@ -275,6 +292,7 @@ public sealed class ReazonSpeechRecognitionService : IDisposable
         {
             if (!_isSpeaking)
             {
+                _speechStartTime = DateTime.UtcNow;
                 // 発話開始 → プリバッファを先頭に追加して冒頭音声を補完
                 foreach (var chunk in _preRollQueue)
                     _speechBuffer.AddRange(chunk);
@@ -321,7 +339,20 @@ public sealed class ReazonSpeechRecognitionService : IDisposable
             return;
         }
 
+        // 誤検出フィルタ: アクティブ発話時間が閾値未満なら擦れ音等として破棄
+        var activeSpeechMs = (_lastSpeechTime - _speechStartTime).TotalMilliseconds;
+        if (activeSpeechMs < MinActiveSpeechMs)
+        {
+            _speechBuffer.Clear();
+            _isSpeaking = false;
+            return;
+        }
+
         var samples = _speechBuffer.ToArray();
+
+        // 声量計測（声量プリセット切り替え用）。バッファクリア前に計算する。
+        LastSpeechVolumeDb = ToDb(ComputeRms(samples));
+
         _speechBuffer.Clear();
         _isSpeaking = false;
 

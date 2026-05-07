@@ -44,7 +44,13 @@
       "WebFetch(domain:api.github.com)",
       "Bash(powershell.exe -ExecutionPolicy Bypass -File \"build.ps1\")",
       "Bash(powershell.exe -Command 'Get-Content '\\\\''C:\\\\AppDevelop\\\\A.I.VOICE-Bridge\\\\src\\\\AIVoiceBridge.App\\\\AIVoiceBridge.App.csproj'\\\\'' -Raw | Select-String -Pattern '\\\\''plugin|Plugin|Content|Copy'\\\\'' -AllMatches | ForEach-Object { $_.Matches } | Select-Object -ExpandProperty Value')",
-      "Bash(powershell.exe -Command \"Get-Content 'C:\\\\AppDevelop\\\\A.I.VOICE-Bridge\\\\src\\\\AIVoiceBridge.App\\\\AIVoiceBridge.App.csproj' -Raw\")"
+      "Bash(powershell.exe -Command \"Get-Content 'C:\\\\AppDevelop\\\\A.I.VOICE-Bridge\\\\src\\\\AIVoiceBridge.App\\\\AIVoiceBridge.App.csproj' -Raw\")",
+      "Bash(powershell.exe -Command \"Get-Content 'C:\\\\AppDevelop\\\\A.I.VOICE-Bridge\\\\src\\\\AIVoiceBridge.App\\\\Services\\\\SpeechRecognitionService.cs' -Raw\")",
+      "Bash(powershell.exe -Command \"Select-String -Path 'C:\\\\AppDevelop\\\\A.I.VOICE-Bridge\\\\src\\\\AIVoiceBridge.App\\\\ViewModels\\\\MainViewModel.cs' -Pattern 'Device|device' | Select-Object LineNumber, Line\")",
+      "Bash(powershell.exe -Command \"Select-String -Path 'C:\\\\AppDevelop\\\\A.I.VOICE-Bridge\\\\src\\\\AIVoiceBridge.App\\\\ViewModels\\\\MainViewModel.cs' -Pattern 'InitializeAsync|ReloadModel|_reazonRecognition|_browserRecognition|RecognitionEngine\\\\.' | Select-Object LineNumber, Line\")",
+      "Bash(powershell.exe -Command \"Get-ChildItem 'C:\\\\Users\\\\skki7\\\\.nuget\\\\packages\\\\whisper.net\\\\1.9.0\\\\' -Recurse -Filter '*.cs' | Select-Object -First 5 FullName; Get-ChildItem 'C:\\\\Users\\\\skki7\\\\.nuget\\\\packages\\\\whisper.net\\\\1.9.0\\\\lib\\\\' -Recurse | Select-Object FullName\")",
+      "Bash(powershell.exe -Command \"Select-String -Path 'C:\\\\AppDevelop\\\\A.I.VOICE-Bridge\\\\src\\\\AIVoiceBridge.App\\\\ViewModels\\\\MainViewModel.cs' -Pattern 'Subtitle|SaveSettings|initial_prompt|InitialPrompt|DictionaryPreset' | Select-Object LineNumber, Line\")",
+      "Bash(powershell -ExecutionPolicy Bypass -File build.ps1)"
     ]
   }
 }

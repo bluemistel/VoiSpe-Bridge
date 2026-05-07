@@ -1,8 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows.Media;
+using System.Windows.Threading;
 
 namespace VoiSpeBridge.App.ViewModels;
 
@@ -12,13 +14,42 @@ namespace VoiSpeBridge.App.ViewModels;
 /// </summary>
 public sealed class SubtitleViewModel : INotifyPropertyChanged
 {
+    // ──── 自動非表示タイマー（最後の発話から 3 秒後にテキストを消す）────
+
+    private readonly DispatcherTimer _hideTimer;
+
+    public SubtitleViewModel()
+    {
+        _hideTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
+        _hideTimer.Tick += (_, _) =>
+        {
+            _hideTimer.Stop();
+            DisplayText = string.Empty;
+        };
+    }
+
     // ──── 表示テキスト ────
 
     private string _displayText = "";
     public string DisplayText
     {
         get => _displayText;
-        set => Set(ref _displayText, value);
+        set
+        {
+            if (Set(ref _displayText, value))
+            {
+                if (!string.IsNullOrEmpty(value))
+                {
+                    // 発話が来るたびにタイマーをリセットして 3 秒後に消す
+                    _hideTimer.Stop();
+                    _hideTimer.Start();
+                }
+                else
+                {
+                    _hideTimer.Stop();
+                }
+            }
+        }
     }
 
     // ──── フォント ────
@@ -95,6 +126,22 @@ public sealed class SubtitleViewModel : INotifyPropertyChanged
     {
         get => _strokeThickness;
         set => Set(ref _strokeThickness, value);
+    }
+
+    // ──── ウィンドウサイズ（設定保存・復元用）────
+
+    private double _windowWidth = 900.0;
+    public double WindowWidth
+    {
+        get => _windowWidth;
+        set => Set(ref _windowWidth, value);
+    }
+
+    private double _windowHeight = 180.0;
+    public double WindowHeight
+    {
+        get => _windowHeight;
+        set => Set(ref _windowHeight, value);
     }
 
     // ──── INPC ────

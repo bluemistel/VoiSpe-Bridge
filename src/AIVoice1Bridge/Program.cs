@@ -6,7 +6,7 @@ using System.Threading;
 
 // A.I.VOICE v1 の AI.Talk.Editor.Api は System.ServiceModel (WCF) に依存するため
 // .NET Framework 4.8 で動作させる必要がある。
-// このブリッジは AIVoiceBridge.Plugin.AIVoice.dll (.NET 8) からサブプロセスとして起動され、
+// このブリッジは VoiSpeBridge.Plugin.AIVoice.dll (.NET 8) からサブプロセスとして起動され、
 // A.I.VOICE Editor との通信を代行する。
 
 #if USE_REAL_AIVOICE_API
@@ -29,7 +29,7 @@ static class Program
 
 #if !USE_REAL_AIVOICE_API
         return Error("AI.Talk.Editor.Api.dll が見つかりません。" +
-            "src\\Plugins\\AIVoiceBridge.Plugin.AIVoice\\lib\\ に配置してリビルドしてください。");
+            "src\\Plugins\\AIVoiceBridge.Plugin.AIVoice\\lib\\ に配置してリビルドしてください。");  // パスはソース内部フォルダのため変更なし);
 #else
         return args[0] switch
         {

@@ -3,7 +3,7 @@ using System.IO;
 using System.Text;
 
 // CeVIO AI は System.Runtime.Remoting を使用するため .NET Framework 4.8 で動作させる必要がある。
-// このブリッジは AIVoiceBridge.Plugin.CeVIOAI.dll(.NET 8) からプロセスとして起動され、
+// このブリッジは VoiSpeBridge.Plugin.CeVIOAI.dll(.NET 8) からプロセスとして起動され、
 // CeVIO AI との IPC を代行する。
 
 #if USE_REAL_CEVIO_API

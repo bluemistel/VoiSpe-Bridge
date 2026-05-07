@@ -47,6 +47,13 @@ public sealed class SpeechRecognitionService : IDisposable
     public int SilenceDurationMs { get; set; } = 800;
 
     /// <summary>
+    /// 誤検出フィルタ: 発話アクティブ区間（VoiceTriggerDb 超過中）が
+    /// この時間未満なら認識を破棄する。擦れ音など瞬間的なノイズを除外するために使用。
+    /// デフォルト 200ms。
+    /// </summary>
+    public int MinActiveSpeechMs { get; set; } = 200;
+
+    /// <summary>
     /// true: GPU（CUDA → Vulkan → CPU の順でフォールバック）
     /// false: CPU のみ
     /// </summary>
@@ -68,6 +75,12 @@ public sealed class SpeechRecognitionService : IDisposable
 
     public bool IsListening => _isListening;
 
+    /// <summary>
+    /// 直前の発話バッファ全体の平均 RMS を dB 変換した値。
+    /// FlushSpeechBuffer 呼び出し後に更新される。声量プリセット切り替えに使用。
+    /// </summary>
+    public float LastSpeechVolumeDb { get; private set; } = -96f;
+
     // ---- プライベート ----
 
     private WaveInEvent? _waveIn;
@@ -79,6 +92,7 @@ public sealed class SpeechRecognitionService : IDisposable
     private readonly List<short> _speechBuffer = new(SampleRate * 30);
     private bool _isSpeaking;
     private DateTime _lastSpeechTime;
+    private DateTime _speechStartTime;
 
     // 最新発話バージョン — 古い Whisper 推論結果を破棄するために使用
     private int _currentVersion;
@@ -124,26 +138,37 @@ public sealed class SpeechRecognitionService : IDisposable
         var modeLabel = UseGpu ? "GPU 優先" : "CPU のみ";
         StatusChanged?.Invoke(this, $"Whisper {model} モデルを読み込み中... ({modeLabel})");
 
+        // WhisperFactory.FromPath / processor.Build は重い同期処理のため
+        // UI スレッドをブロックしないよう Task.Run で実行する
+        var initialPrompt = InitialPrompt;
+        var useGpu        = UseGpu;
+        var factoryOptions = new WhisperFactoryOptions { UseGpu = useGpu, GpuDevice = 0 };
+
         _processor?.Dispose();
         _factory?.Dispose();
+        _processor = null;
+        _factory   = null;
 
-        var factoryOptions = new WhisperFactoryOptions { UseGpu = UseGpu, GpuDevice = 0 };
-        _factory = WhisperFactory.FromPath(modelPath, factoryOptions);
-        var builder = _factory.CreateBuilder()
-            .WithLanguage("ja")
-            .WithNoContext()
-            .WithNoSpeechThreshold(0.6f);
+        var (newFactory, newProcessor) = await Task.Run(() =>
+        {
+            var f = WhisperFactory.FromPath(modelPath, factoryOptions);
+            var b = f.CreateBuilder()
+                .WithLanguage("ja")
+                .WithNoContext()
+                .WithNoSpeechThreshold(0.6f);
+            if (!string.IsNullOrWhiteSpace(initialPrompt))
+                b = b.WithPrompt(initialPrompt);
+            return (f, b.Build());
+        }, ct);
 
-        if (!string.IsNullOrWhiteSpace(InitialPrompt))
-            builder = builder.WithPrompt(InitialPrompt);
-
-        _processor = builder.Build();
+        _factory   = newFactory;
+        _processor = newProcessor;
 
         _waveIn?.Dispose();
         _waveIn = new WaveInEvent
         {
             WaveFormat = new WaveFormat(SampleRate, 16, 1),
-            BufferMilliseconds = 50, // 100ms→50ms でレスポンスを改善
+            BufferMilliseconds = 50,
         };
         _waveIn.DataAvailable += OnDataAvailable;
 
@@ -227,6 +252,8 @@ public sealed class SpeechRecognitionService : IDisposable
 
         if (db > VoiceTriggerDb)
         {
+            if (!_isSpeaking)
+                _speechStartTime = DateTime.UtcNow;
             _isSpeaking = true;
             _speechBuffer.AddRange(samples);
             _lastSpeechTime = DateTime.UtcNow;
@@ -245,7 +272,19 @@ public sealed class SpeechRecognitionService : IDisposable
     {
         if (_speechBuffer.Count >= (int)(SampleRate * 0.3))
         {
+            // 誤検出フィルタ: アクティブ発話時間が閾値未満なら擦れ音等として破棄
+            var activeSpeechMs = (_lastSpeechTime - _speechStartTime).TotalMilliseconds;
+            if (activeSpeechMs < MinActiveSpeechMs)
+            {
+                _speechBuffer.Clear();
+                _isSpeaking = false;
+                return;
+            }
+
             var samples = _speechBuffer.ToArray();
+
+            // 声量計測（声量プリセット切り替え用）。バッファクリア前に計算する。
+            LastSpeechVolumeDb = ToDb(ComputeRms(samples));
 
             // バージョンを更新して古い推論結果を無効化
             var version = Interlocked.Increment(ref _currentVersion);

@@ -38,7 +38,7 @@ public sealed class PluginManager
             return;
         }
 
-        foreach (var dllPath in Directory.EnumerateFiles(_pluginsDirectory, "AIVoiceBridge.Plugin.*.dll"))
+        foreach (var dllPath in Directory.EnumerateFiles(_pluginsDirectory, "VoiSpeBridge.Plugin.*.dll"))
         {
             try
             {
@@ -98,8 +98,8 @@ file sealed class PluginLoadContext(string pluginPath)
 
     protected override Assembly? Load(AssemblyName assemblyName)
     {
-        // AIVoiceBridge.Core はホスト側のものを使う（インターフェースの型同一性を保つ）
-        if (assemblyName.Name == "AIVoiceBridge.Core")
+        // VoiSpeBridge.Core はホスト側のものを使う（インターフェースの型同一性を保つ）
+        if (assemblyName.Name == "VoiSpeBridge.Core")
             return null;
 
         var resolved = _resolver.ResolveAssemblyToPath(assemblyName);

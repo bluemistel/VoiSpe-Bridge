@@ -15,7 +15,7 @@ namespace VoiSpeBridge.Plugin.AIVoice;
 ///
 /// AI.Talk.Editor.Api は System.ServiceModel (WCF/.NET Framework) に依存するため
 /// .NET 8 から直接呼び出せない。
-/// そのため .NET Framework 4.8 製ブリッジプロセス（AIVoiceBridge.AIVoice1Bridge.exe）経由で通信する。
+/// そのため .NET Framework 4.8 製ブリッジプロセス（VoiSpeBridge.AIVoice1Bridge.exe）経由で通信する。
 ///
 /// 動作フロー:
 ///   1. ConnectAsync(): --list-casts でボイスプリセット一覧を取得
@@ -47,7 +47,7 @@ public sealed class AIVoicePlugin : IVoiceSynthesizerPlugin
         {
             _bridgePath = FindBridgePath()
                 ?? throw new InvalidOperationException(
-                    "AIVoiceBridge.AIVoice1Bridge.exe が見つかりません。\n" +
+                    "VoiSpeBridge.AIVoice1Bridge.exe が見つかりません。\n" +
                     "ソリューションをビルドしてブリッジを生成してください。");
 
             var output = RunBridge(_bridgePath, ["--list-casts"], timeoutMs: 25000);
@@ -111,7 +111,7 @@ public sealed class AIVoicePlugin : IVoiceSynthesizerPlugin
         var pluginDir = Path.GetDirectoryName(typeof(AIVoicePlugin).Assembly.Location);
         if (pluginDir == null) return null;
 
-        var path = Path.Combine(pluginDir, "AIVoiceBridge.AIVoice1Bridge.exe");
+        var path = Path.Combine(pluginDir, "VoiSpeBridge.AIVoice1Bridge.exe");
         return File.Exists(path) ? path : null;
     }
 

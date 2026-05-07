@@ -47,8 +47,21 @@ public partial class MainWindow : Window
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
-        // WebView2 繧貞・縺ｫ蛻晄悄蛹厄ｼ・hromium 繝励Ο繧ｻ繧ｹ襍ｷ蜍輔・繝槭う繧ｯ讓ｩ髯蝉ｻ倅ｸ趣ｼ・        await _vm.BrowserRecognition.InitializeAsync(BrowserWebView);
-        // 髻ｳ螢ｰ隱崎ｭ倥お繝ｳ繧ｸ繝ｳ繧貞・譛溷喧・・hisper 縺ｮ蝣ｴ蜷医・繝｢繝・Ν繝ｭ繝ｼ繝会ｼ・        await _vm.InitializeRecognitionAsync();
+        // WebView2 を先に初期化（Chromium プロセス起動・マイク権限準備）
+        // WebView2 ランタイム未インストール等で失敗しても音声認識初期化はブロックしない
+        try
+        {
+            await _vm.BrowserRecognition.InitializeAsync(BrowserWebView);
+        }
+        catch (Exception ex)
+        {
+            // ブラウザエンジンは使用不可になるが、Whisper / ReazonSpeech は影響なし
+            System.Diagnostics.Debug.WriteLine(
+                $"[OnLoaded] WebView2 初期化失敗（ブラウザエンジン無効）: {ex.Message}");
+        }
+
+        // 音声認識エンジンを初期化（Whisper の場合はモデルロード）
+        await _vm.InitializeRecognitionAsync();
     }
 
     // 笏笏笏笏 驟堺ｿ｡逕ｨ蟄怜ｹ輔え繧｣繝ｳ繝峨え 笏笏笏笏

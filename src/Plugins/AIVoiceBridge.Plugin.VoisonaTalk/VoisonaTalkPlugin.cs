@@ -115,6 +115,13 @@ public sealed class VoisonaTalkPlugin : IVoiceSynthesizerPlugin, IPluginWithConn
         {
             res = await _http.GetFromJsonAsync<VoiceListResponse>("voices", _jsonOptions);
         }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        {
+            IsConnected = false;
+            throw new InvalidOperationException(
+                $"VoisonaTalk API 認証エラー (401 Unauthorized)。\n" +
+                "「接続設定」の「API パスワード」が VoisonaTalk の設定 > API タブのパスワードと一致しているか確認してください。", ex);
+        }
         catch (HttpRequestException ex)
         {
             IsConnected = false;
@@ -297,7 +304,9 @@ public sealed class VoisonaTalkPlugin : IVoiceSynthesizerPlugin, IPluginWithConn
             Timeout     = TimeSpan.FromSeconds(30),
         };
 
-        if (!string.IsNullOrEmpty(_email) && !string.IsNullOrEmpty(_password))
+        // パスワードが設定されている場合のみ Basic 認証ヘッダーを付与する。
+        // メールアドレスが空の場合は ":<password>" 形式で送信（VoisonaTalk の仕様に準拠）。
+        if (!string.IsNullOrEmpty(_password))
         {
             var creds = Convert.ToBase64String(
                 Encoding.UTF8.GetBytes($"{_email}:{_password}"));

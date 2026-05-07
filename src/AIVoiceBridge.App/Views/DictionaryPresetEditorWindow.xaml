@@ -40,7 +40,7 @@
 
     <!-- Initial Prompt -->
     <StackPanel Grid.Row="1" Margin="0,0,0,12">
-      <TextBlock Style="{StaticResource Label}" Text="initial_prompt（固有名詞を列挙して認識精度を上げます）"/>
+      <TextBlock Style="{StaticResource Label}" Text="initial_prompt（固有名詞を列挙して認識精度を上げます）※ Whisper エンジン使用時のみ有効"/>
       <TextBox x:Name="InitialPromptBox"
                Text="{Binding Preset.InitialPrompt, Mode=OneTime}"
                Height="72"

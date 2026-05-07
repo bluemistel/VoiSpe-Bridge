@@ -91,14 +91,149 @@
         <Setter Property="Background" Value="{StaticResource DangerBrush}"/>
       </Style>
 
-      <!-- ComboBoxスタイル -->
+      <!--
+        ComboBox カスタム ControlTemplate（ダークテーマ）
+        【問題の根本原因】
+          WPF 標準の ComboBox テンプレートは Aero2 テーマのハードコード色を使うため
+          SystemColors やスタイルの Background/Foreground セッターが効かず
+          選択表示エリアが白背景になる。さらにグローバル TextBlock スタイルが
+          Foreground=白 を"明示的"にセットするため、ComboBox の Foreground を
+          Black に変えても継承で負けて無効になる。
+        【解決策】
+          ControlTemplate を完全に置き換え、選択エリア背景を SurfaceBrush で固定する。
+          文字色はグローバル TextBlock スタイル（白）を活かし、暗背景の上で可視化。
+      -->
       <Style TargetType="ComboBox">
-        <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+        <Setter Property="Background"    Value="{StaticResource SurfaceBrush}"/>
+        <Setter Property="Foreground"    Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="BorderBrush"   Value="{StaticResource BorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Padding" Value="8,4"/>
-        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Padding"       Value="8,4"/>
+        <Setter Property="FontSize"      Value="13"/>
+        <Setter Property="FontFamily"    Value="Yu Gothic UI, Segoe UI"/>
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility"   Value="Auto"/>
+        <Setter Property="Template">
+          <Setter.Value>
+            <!--
+              【修正ポイント】Popup のコンテンツ内では TemplateBinding / RelativeSource=TemplatedParent
+              が WPF の制限により機能しない（サイレントエラーでテンプレート全体が無効化される）。
+              Popup の幅は root Grid を ElementName 参照で取得する。
+            -->
+            <ControlTemplate TargetType="ComboBox">
+              <!-- x:Name="root" を付けて Popup 内から ElementName でアクセス -->
+              <Grid x:Name="root">
+                <!-- ヘッダー部分：選択済みアイテム + 矢印 + クリック領域 -->
+                <Border x:Name="Border"
+                        Background="{StaticResource SurfaceBrush}"
+                        BorderBrush="{StaticResource BorderBrush}"
+                        BorderThickness="1">
+                  <Grid>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*"/>
+                      <ColumnDefinition Width="20"/>
+                    </Grid.ColumnDefinitions>
+                    <!-- 選択アイテム表示 -->
+                    <ContentPresenter
+                        x:Name="ContentSite"
+                        Grid.Column="0"
+                        Content="{TemplateBinding SelectionBoxItem}"
+                        ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                        ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}"
+                        Margin="{TemplateBinding Padding}"
+                        VerticalAlignment="Center"
+                        IsHitTestVisible="False"/>
+                    <!-- 開閉矢印 -->
+                    <Path x:Name="Arrow"
+                          Grid.Column="1"
+                          Fill="{StaticResource TextSecondaryBrush}"
+                          VerticalAlignment="Center"
+                          HorizontalAlignment="Center"
+                          Data="M 0 0 L 4 4 L 8 0 Z"/>
+                    <!-- 透明クリック領域（ToggleButton） -->
+                    <ToggleButton Grid.ColumnSpan="2"
+                                  Focusable="False"
+                                  ClickMode="Press"
+                                  IsChecked="{Binding IsDropDownOpen, Mode=TwoWay,
+                                              RelativeSource={RelativeSource TemplatedParent}}">
+                      <ToggleButton.Template>
+                        <ControlTemplate TargetType="ToggleButton">
+                          <Rectangle Fill="Transparent"/>
+                        </ControlTemplate>
+                      </ToggleButton.Template>
+                    </ToggleButton>
+                  </Grid>
+                </Border>
+                <!--
+                  ドロップダウンポップアップ。
+                  Popup 内では TemplateBinding / RelativeSource=TemplatedParent が使えないため
+                  MinWidth は ElementName=root で取得し、MaxHeight は固定値とする。
+                -->
+                <Popup x:Name="PART_Popup"
+                       AllowsTransparency="True"
+                       IsOpen="{TemplateBinding IsDropDownOpen}"
+                       Placement="Bottom"
+                       Focusable="False"
+                       PopupAnimation="Slide">
+                  <Border Background="{StaticResource SurfaceBrush}"
+                          BorderBrush="{StaticResource BorderBrush}"
+                          BorderThickness="1"
+                          MinWidth="{Binding ActualWidth, ElementName=root}"
+                          MaxHeight="400">
+                    <ScrollViewer CanContentScroll="True">
+                      <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained"/>
+                    </ScrollViewer>
+                  </Border>
+                </Popup>
+              </Grid>
+              <ControlTemplate.Triggers>
+                <Trigger Property="IsEnabled" Value="False">
+                  <Setter Property="Opacity" Value="0.56"/>
+                </Trigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                  <Setter TargetName="Border" Property="BorderBrush"
+                          Value="{StaticResource AccentBrush}"/>
+                </Trigger>
+                <Trigger Property="IsDropDownOpen" Value="True">
+                  <Setter TargetName="Border" Property="BorderBrush"
+                          Value="{StaticResource AccentBrush}"/>
+                </Trigger>
+              </ControlTemplate.Triggers>
+            </ControlTemplate>
+          </Setter.Value>
+        </Setter>
+      </Style>
+
+      <!-- ContextMenu / MenuItem スタイル（白背景＋黒文字） -->
+      <Style TargetType="ContextMenu">
+        <Setter Property="Background"   Value="{StaticResource SurfaceBrush}"/>
+        <Setter Property="BorderBrush"  Value="{StaticResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+      </Style>
+
+      <Style TargetType="MenuItem">
+        <!--
+          グローバル TextBlock スタイルの Foreground=白 が MenuItem 内の TextBlock にも適用されるため
+          Style.Resources 内で TextBlock スタイルをリセット（BasedOn="{x:Null}"）して
+          明示的に TextPrimaryBrush を設定する。
+        -->
+        <Style.Resources>
+          <Style TargetType="TextBlock" BasedOn="{x:Null}">
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+            <Setter Property="FontFamily" Value="Yu Gothic UI, Segoe UI"/>
+            <Setter Property="FontSize"   Value="13"/>
+          </Style>
+        </Style.Resources>
+        <Setter Property="Background"  Value="{StaticResource SurfaceBrush}"/>
+        <Setter Property="Foreground"  Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="FontFamily"  Value="Yu Gothic UI, Segoe UI"/>
+        <Setter Property="FontSize"    Value="13"/>
+        <Style.Triggers>
+          <Trigger Property="IsHighlighted" Value="True">
+            <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+          </Trigger>
+        </Style.Triggers>
       </Style>
 
       <!-- Sliderスタイル -->
