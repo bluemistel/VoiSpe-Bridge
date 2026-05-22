@@ -14,31 +14,56 @@
       <conv:EngineTypeToLabelConverter x:Key="EngineTypeToLabel"/>
       <conv:ColorToBrushConverter x:Key="ColorToBrush"/>
 
-      <!-- カラーパレット（必ず SystemColors より前に定義する） -->
-      <Color x:Key="BackgroundColor">#1E1E2E</Color>
-      <Color x:Key="SurfaceColor">#2A2A3E</Color>
-      <Color x:Key="AccentColor">#7C6AF7</Color>
-      <Color x:Key="AccentHoverColor">#9580FF</Color>
-      <Color x:Key="TextPrimaryColor">#FFFFFF</Color>
-      <Color x:Key="TextSecondaryColor">#A0A0B8</Color>
-      <Color x:Key="SuccessColor">#4CAF82</Color>
-      <Color x:Key="DangerColor">#F27474</Color>
-      <Color x:Key="BorderColor">#3A3A54</Color>
+      <!-- ══════════════════════════════════════════════════════════
+           カラーパレット — VoiSpe-Bridge デザインシステム
+           ライトモード基定（落ち着いた温かみのあるグレー地＋スチールブルー）
+           ダークモード: #2A303B 地 / #333A47 surface / #6E9BD9 accent
+           ══════════════════════════════════════════════════════════ -->
 
-      <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource BackgroundColor}"/>
-      <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}"/>
-      <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}"/>
-      <SolidColorBrush x:Key="AccentHoverBrush" Color="{StaticResource AccentHoverColor}"/>
-      <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimaryColor}"/>
+      <!-- ライトモード基本色（デザインシステム CSS トークン対応） -->
+      <!-- bg: #F1F2F5 暖かみのある薄グレー（純白でなく長時間作業向け）-->
+      <Color x:Key="BackgroundColor">#F1F2F5</Color>
+      <!-- surface: #FFFFFF カード面（bg から一段浮かせる）-->
+      <Color x:Key="SurfaceColor">#FFFFFF</Color>
+      <!-- surface-2: #F6F7FA 入力フィールド地 / ホバー地 -->
+      <Color x:Key="Surface2Color">#F6F7FA</Color>
+      <!-- accent: #3F6FB7 スチールブルー（Audacity / Reaper 系の業務感）-->
+      <Color x:Key="AccentColor">#3F6FB7</Color>
+      <!-- accent-hover: #345D9C -->
+      <Color x:Key="AccentHoverColor">#345D9C</Color>
+      <!-- accent-soft: #E9F0F9 選択ハイライト薄地 -->
+      <Color x:Key="AccentSoftColor">#E9F0F9</Color>
+      <!-- fg-1: #2A303B 主テキスト -->
+      <Color x:Key="TextPrimaryColor">#2A303B</Color>
+      <!-- fg-2: #4A5260 補助テキスト（ラベル / ヘルプ）-->
+      <Color x:Key="TextSecondaryColor">#4A5260</Color>
+      <!-- fg-on-accent: #FFFFFF アクセント地上のテキスト（ボタン / 選択項目）-->
+      <Color x:Key="FgOnAccentColor">#FFFFFF</Color>
+      <!-- success: #3D9A6B -->
+      <Color x:Key="SuccessColor">#3D9A6B</Color>
+      <!-- danger: #D26060 -->
+      <Color x:Key="DangerColor">#D26060</Color>
+      <!-- border: #E2E5EC カード罫線 -->
+      <Color x:Key="BorderColor">#E2E5EC</Color>
+
+      <SolidColorBrush x:Key="BackgroundBrush"   Color="{StaticResource BackgroundColor}"/>
+      <SolidColorBrush x:Key="SurfaceBrush"      Color="{StaticResource SurfaceColor}"/>
+      <SolidColorBrush x:Key="Surface2Brush"     Color="{StaticResource Surface2Color}"/>
+      <SolidColorBrush x:Key="AccentBrush"       Color="{StaticResource AccentColor}"/>
+      <SolidColorBrush x:Key="AccentHoverBrush"  Color="{StaticResource AccentHoverColor}"/>
+      <SolidColorBrush x:Key="AccentSoftBrush"   Color="{StaticResource AccentSoftColor}"/>
+      <SolidColorBrush x:Key="TextPrimaryBrush"  Color="{StaticResource TextPrimaryColor}"/>
       <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}"/>
-      <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}"/>
-      <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerColor}"/>
-      <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}"/>
+      <SolidColorBrush x:Key="FgOnAccentBrush"   Color="{StaticResource FgOnAccentColor}"/>
+      <SolidColorBrush x:Key="SuccessBrush"      Color="{StaticResource SuccessColor}"/>
+      <SolidColorBrush x:Key="DangerBrush"       Color="{StaticResource DangerColor}"/>
+      <SolidColorBrush x:Key="BorderBrush"       Color="{StaticResource BorderColor}"/>
 
       <!--
-        WPF システムカラーの上書き（ダークテーマ対応）
-        ComboBox/ListBox ポップアップ・選択ハイライトなど
-        デフォルト白背景を持つコントロールを一括でダーク化する
+        WPF システムカラーの上書き（ライトモード対応）
+        ComboBox / ListBox ポップアップ・選択ハイライトなどが
+        デザインシステムの色に沿うよう上書きする。
+        HighlightTextBrushKey は白固定（アクセント地上で読めるよう）。
       -->
       <SolidColorBrush x:Key="{x:Static SystemColors.WindowBrushKey}"
                        Color="{StaticResource SurfaceColor}"/>
@@ -51,16 +76,16 @@
       <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}"
                        Color="{StaticResource AccentColor}"/>
       <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}"
-                       Color="{StaticResource TextPrimaryColor}"/>
+                       Color="{StaticResource FgOnAccentColor}"/>
       <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}"
-                       Color="{StaticResource BorderColor}"/>
+                       Color="{StaticResource AccentSoftColor}"/>
       <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}"
                        Color="{StaticResource TextSecondaryColor}"/>
 
       <!-- ボタンスタイル -->
       <Style x:Key="PrimaryButton" TargetType="Button">
         <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource FgOnAccentBrush}"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Padding" Value="16,8"/>
         <Setter Property="FontSize" Value="14"/>
@@ -69,6 +94,17 @@
         <Setter Property="Template">
           <Setter.Value>
             <ControlTemplate TargetType="Button">
+              <ControlTemplate.Resources>
+                <!--
+                  グローバル TextBlock スタイル（Foreground = TextPrimaryBrush）が
+                  ボタン内部のテキストにも適用されて文字が黒くなる問題の修正。
+                  ControlTemplate 内でスタイルをリセットし、ボタンの Foreground を継承させる。
+                -->
+                <Style TargetType="TextBlock" BasedOn="{x:Null}">
+                  <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                  <Setter Property="FontFamily" Value="Yu Gothic UI, Segoe UI"/>
+                </Style>
+              </ControlTemplate.Resources>
               <Border Background="{TemplateBinding Background}"
                       CornerRadius="6"
                       Padding="{TemplateBinding Padding}">
@@ -92,16 +128,14 @@
       </Style>
 
       <!--
-        ComboBox カスタム ControlTemplate（ダークテーマ）
-        【問題の根本原因】
-          WPF 標準の ComboBox テンプレートは Aero2 テーマのハードコード色を使うため
-          SystemColors やスタイルの Background/Foreground セッターが効かず
-          選択表示エリアが白背景になる。さらにグローバル TextBlock スタイルが
-          Foreground=白 を"明示的"にセットするため、ComboBox の Foreground を
-          Black に変えても継承で負けて無効になる。
-        【解決策】
-          ControlTemplate を完全に置き換え、選択エリア背景を SurfaceBrush で固定する。
-          文字色はグローバル TextBlock スタイル（白）を活かし、暗背景の上で可視化。
+        ComboBox カスタム ControlTemplate
+        【背景】
+          WPF 標準テンプレートは Aero2 テーマのハードコード色を使うため
+          SystemColors やスタイルセッターが効かない。
+          ControlTemplate を完全に置き換えることで SurfaceBrush / BorderBrush を確実に適用する。
+        【ライトモード留意点】
+          グローバル TextBlock スタイルの Foreground は TextPrimaryBrush（暗色）なので
+          選択エリア（SurfaceBrush = 白地）上でそのまま読める。
       -->
       <Style TargetType="ComboBox">
         <Setter Property="Background"    Value="{StaticResource SurfaceBrush}"/>
@@ -213,9 +247,9 @@
 
       <Style TargetType="MenuItem">
         <!--
-          グローバル TextBlock スタイルの Foreground=白 が MenuItem 内の TextBlock にも適用されるため
-          Style.Resources 内で TextBlock スタイルをリセット（BasedOn="{x:Null}"）して
-          明示的に TextPrimaryBrush を設定する。
+          ライトモードでは TextPrimaryBrush が暗色のため、内側 TextBlock スタイルの
+          リセット（BasedOn="{x:Null}"）は引き続き必要（グローバル Style との競合防止）。
+          ハイライト時はアクセント地上で読めるよう FgOnAccentBrush（白）を使う。
         -->
         <Style.Resources>
           <Style TargetType="TextBlock" BasedOn="{x:Null}">
@@ -231,7 +265,7 @@
         <Style.Triggers>
           <Trigger Property="IsHighlighted" Value="True">
             <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
-            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource FgOnAccentBrush}"/>
           </Trigger>
         </Style.Triggers>
       </Style>
@@ -249,15 +283,28 @@
 
       <!-- TextBoxスタイル -->
       <Style TargetType="TextBox">
-        <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
-        <Setter Property="CaretBrush" Value="{StaticResource TextPrimaryBrush}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+        <Setter Property="Background"      Value="{StaticResource Surface2Brush}"/>
+        <Setter Property="Foreground"      Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="CaretBrush"      Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="BorderBrush"     Value="{StaticResource BorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Padding" Value="8,6"/>
-        <Setter Property="FontFamily" Value="Yu Gothic UI, Segoe UI"/>
-        <Setter Property="FontSize" Value="13"/>
-        <Setter Property="SelectionBrush" Value="{StaticResource AccentBrush}"/>
+        <Setter Property="Padding"         Value="8,6"/>
+        <Setter Property="FontFamily"      Value="Yu Gothic UI, Segoe UI"/>
+        <Setter Property="FontSize"        Value="13"/>
+        <Setter Property="SelectionBrush"  Value="{StaticResource AccentBrush}"/>
+      </Style>
+
+      <!-- PasswordBoxスタイル（TextBox と共通のルック）-->
+      <Style TargetType="PasswordBox">
+        <Setter Property="Background"      Value="{StaticResource Surface2Brush}"/>
+        <Setter Property="Foreground"      Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="CaretBrush"      Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="BorderBrush"     Value="{StaticResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding"         Value="8,6"/>
+        <Setter Property="FontFamily"      Value="Yu Gothic UI, Segoe UI"/>
+        <Setter Property="FontSize"        Value="13"/>
+        <Setter Property="SelectionBrush"  Value="{StaticResource AccentBrush}"/>
       </Style>
 
       <!-- ComboBoxItem（ドロップダウン項目）スタイル -->
@@ -268,13 +315,15 @@
         <Setter Property="FontFamily" Value="Yu Gothic UI, Segoe UI"/>
         <Setter Property="FontSize" Value="13"/>
         <Style.Triggers>
+          <!-- ホバー: surface-2 地（薄グレー）、テキストはそのまま -->
           <Trigger Property="IsHighlighted" Value="True">
-            <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+            <Setter Property="Background" Value="{StaticResource Surface2Brush}"/>
             <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
           </Trigger>
+          <!-- 選択: accent-soft 地（薄ブルー）、テキストはアクセント色 -->
           <Trigger Property="IsSelected" Value="True">
-            <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
-            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+            <Setter Property="Background" Value="{StaticResource AccentSoftBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
           </Trigger>
         </Style.Triggers>
       </Style>
@@ -286,11 +335,13 @@
         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
         <Setter Property="Padding" Value="2"/>
         <Style.Triggers>
+          <!-- ホバー: surface-2（薄グレー）で軽い浮き上がり感 -->
           <Trigger Property="IsMouseOver" Value="True">
-            <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+            <Setter Property="Background" Value="{StaticResource Surface2Brush}"/>
           </Trigger>
+          <!-- 選択: accent-soft（薄ブルー）で選択状態を明示 -->
           <Trigger Property="IsSelected" Value="True">
-            <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+            <Setter Property="Background" Value="{StaticResource AccentSoftBrush}"/>
           </Trigger>
         </Style.Triggers>
       </Style>

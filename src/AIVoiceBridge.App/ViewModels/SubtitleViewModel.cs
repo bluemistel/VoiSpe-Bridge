@@ -24,11 +24,15 @@ public sealed class SubtitleViewModel : INotifyPropertyChanged
         _hideTimer.Tick += (_, _) =>
         {
             _hideTimer.Stop();
-            DisplayText = string.Empty;
+            // テスト表示中はタイマーで消去しない（次の音声認識まで表示し続ける）
+            if (!_isTestText)
+                DisplayText = string.Empty;
         };
     }
 
     // ──── 表示テキスト ────
+
+    private bool _isTestText; // テスト用ダミーテキスト表示中フラグ
 
     private string _displayText = "";
     public string DisplayText
@@ -36,6 +40,7 @@ public sealed class SubtitleViewModel : INotifyPropertyChanged
         get => _displayText;
         set
         {
+            _isTestText = false; // 実音声認識テキストが来たらダミーフラグをリセット
             if (Set(ref _displayText, value))
             {
                 if (!string.IsNullOrEmpty(value))
@@ -49,6 +54,20 @@ public sealed class SubtitleViewModel : INotifyPropertyChanged
                     _hideTimer.Stop();
                 }
             }
+        }
+    }
+
+    /// <summary>
+    /// 配信用字幕ウィンドウの表示位置確認用ダミーテキストを表示する。
+    /// 次に <see cref="DisplayText"/> が設定されるまで自動非表示タイマーを起動しない。
+    /// </summary>
+    public void ShowTestText(string text)
+    {
+        _isTestText = true;
+        _hideTimer.Stop();
+        if (Set(ref _displayText, text, nameof(DisplayText)))
+        {
+            // タイマーは起動しない（次の音声認識が来るまで表示し続ける）
         }
     }
 

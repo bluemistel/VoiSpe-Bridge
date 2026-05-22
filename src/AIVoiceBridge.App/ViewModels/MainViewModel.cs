@@ -486,6 +486,27 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         set => Set(ref _loudCastIntonation, Math.Round(value, 2));
     }
 
+    // ---- テーマ ----
+
+    private bool _isDarkMode;
+    public bool IsDarkMode
+    {
+        get => _isDarkMode;
+        set
+        {
+            if (Set(ref _isDarkMode, value))
+            {
+                App.SetTheme(value);
+                OnPropertyChanged(nameof(ThemeToggleLabel));
+            }
+        }
+    }
+
+    /// <summary>テーマ切り替えボタンのラベル（ライト: 🌙、ダーク: ☀）</summary>
+    public string ThemeToggleLabel => _isDarkMode ? "☀" : "🌙";
+
+    public RelayCommand ToggleThemeCommand { get; private set; } = null!;
+
     // ---- コマンド ----
 
     // ---- 配信用字幕 ----
@@ -534,7 +555,13 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             _ => SelectedDictionaryPreset != null && DictionaryPresets.Count > 1);
         OpenPluginSettingsCommand  = new RelayCommand(_ => ShowPluginSettings?.Invoke());
         ReconnectPluginCommand     = new RelayCommand(_ => _ = OnPluginChangedAsync());
-        ToggleSubtitleWindowCommand = new RelayCommand(_ => ShowSubtitleWindow?.Invoke());
+        ToggleSubtitleWindowCommand = new RelayCommand(_ =>
+        {
+            ShowSubtitleWindow?.Invoke();
+            // ウィンドウの位置確認用ダミーテキストを表示（次の音声認識で置き換えられる）
+            Subtitle.ShowTestText("配信用に表示するためのテスト字幕です");
+        });
+        ToggleThemeCommand = new RelayCommand(_ => IsDarkMode = !IsDarkMode);
 
         // 発声キュー（最大10件・古いものを自動破棄）
         _speakChannel = Channel.CreateBounded<(string, bool)>(
@@ -556,6 +583,10 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _silenceDurationMs = s.SilenceDurationMs;
         _minActiveSpeechMs = s.MinActiveSpeechMs;
         _minRecognizedTextLength = s.MinRecognizedTextLength;
+
+        // テーマ（バッキングフィールドに直接設定してから App.SetTheme を呼ぶ）
+        _isDarkMode = s.IsDarkMode;
+        if (s.IsDarkMode) App.SetTheme(true);
 
         // 音声パラメータ
         _speed = s.Speed;
@@ -666,6 +697,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             LoudCastIntonation       = _loudCastIntonation,
             MinActiveSpeechMs        = _minActiveSpeechMs,
             MinRecognizedTextLength  = _minRecognizedTextLength,
+            IsDarkMode               = _isDarkMode,
         });
     }
 

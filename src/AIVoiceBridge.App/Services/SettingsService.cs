@@ -72,6 +72,11 @@ public sealed class AppSettings
     /// この文字数未満の認識結果は破棄する。
     /// </summary>
     public int MinRecognizedTextLength { get; set; } = 1;
+
+    // ---- テーマ ----
+
+    /// <summary>ダークモードを使用するか。</summary>
+    public bool IsDarkMode { get; set; } = false;
 }
 
 public sealed class SettingsService

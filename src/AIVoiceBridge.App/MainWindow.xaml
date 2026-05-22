@@ -5,6 +5,7 @@
         xmlns:svc="clr-namespace:VoiSpeBridge.App.Services"
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         Title="VoiSpe-Bridge"
+        Icon="pack://application:,,,/resource/appicon.png"
         Width="920" Height="680"
         MinWidth="720" MinHeight="520"
         Background="{StaticResource BackgroundBrush}"
@@ -131,6 +132,12 @@
                      Foreground="{StaticResource TextSecondaryBrush}"
                      FontSize="11" VerticalAlignment="Center"
                      Margin="0,0,6,0"/>
+          <Button Content="{Binding ThemeToggleLabel}"
+                  Command="{Binding ToggleThemeCommand}"
+                  Style="{StaticResource HeaderIconButton}"
+                  Margin="0,0,6,0"
+                  FontSize="16"
+                  ToolTip="ダーク / ライト テーマを切り替え"/>
           <Button Content="🖥 配信用字幕"
                   Command="{Binding ToggleSubtitleWindowCommand}"
                   Style="{StaticResource HeaderPluginButton}"

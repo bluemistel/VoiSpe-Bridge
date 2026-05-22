@@ -10,10 +10,17 @@
     <AssemblyName>VoiSpeBridge</AssemblyName>
     <RootNamespace>VoiSpeBridge.App</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- exe ファイルのアイコン（PNG → ICO 変換は GenerateAppIcon ターゲットで行う） -->
+    <ApplicationIcon>..\..\resource\appicon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\AIVoiceBridge.Core\AIVoiceBridge.Core.csproj" />
+  </ItemGroup>
+
+  <!-- アプリアイコン（タスクバー・ウィンドウ表示用） -->
+  <ItemGroup>
+    <Resource Include="..\..\resource\appicon.png" Link="resource/appicon.png"/>
   </ItemGroup>
 
   <ItemGroup>
@@ -35,6 +42,20 @@
     <!-- モデル tar.bz2 アーカイブ展開用 -->
     <PackageReference Include="SharpCompress" Version="0.38.0" />
   </ItemGroup>
+
+  <!-- PNG → ICO 変換（初回 or PNG 更新時のみ実行） -->
+  <PropertyGroup>
+    <AppIconPng>$(MSBuildThisFileDirectory)..\..\resource\appicon.png</AppIconPng>
+    <AppIconIco>$(MSBuildThisFileDirectory)..\..\resource\appicon.ico</AppIconIco>
+    <AppIconScript>$(MSBuildThisFileDirectory)..\..\resource\create-appicon.ps1</AppIconScript>
+  </PropertyGroup>
+  <Target Name="GenerateAppIcon"
+          BeforeTargets="CoreCompile"
+          Inputs="$(AppIconPng)"
+          Outputs="$(AppIconIco)">
+    <Exec Command="powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(AppIconScript)&quot; -PngPath &quot;$(AppIconPng)&quot; -IcoPath &quot;$(AppIconIco)&quot;"
+          ContinueOnError="true"/>
+  </Target>
 
   <Target Name="CreatePluginsFolder" AfterTargets="Build">
     <MakeDir Directories="$(OutputPath)plugins" />
