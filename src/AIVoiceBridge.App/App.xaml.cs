@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Windows;
 using System.Windows.Media;
 
@@ -44,41 +44,46 @@ public partial class App : Application
 
     /// <summary>
     /// アプリ全体のカラーテーマを切り替える。
-    /// App.xaml の SolidColorBrush を直接ミューテートするため StaticResource バインディングも更新される。
+    /// Application.Resources のブラシを新しいオブジェクトで置き換えるため、
+    /// DynamicResource バインディングが自動的に更新される。
     /// </summary>
     public static void SetTheme(bool isDark)
     {
-        var res = Current.Resources;
+        var res     = Current.Resources;
         var palette = isDark ? DarkBrushes : LightBrushes;
 
+        // アプリブラシを置き換え（DynamicResource バインディングが自動追随）
         foreach (var (key, r, g, b) in palette)
         {
-            var color = Color.FromRgb(r, g, b);
-            if (res[key] is SolidColorBrush brush && !brush.IsFrozen)
-                brush.Color = color;
+            var brush = new SolidColorBrush(Color.FromRgb(r, g, b));
+            brush.Freeze();
+            res[key] = brush;
         }
 
-        // WPF システムカラーのオーバーライドブラシも更新
+        // WPF システムカラーのオーバーライドブラシも置き換え
         // （ComboBox ドロップダウン・ListBox 選択色などに影響）
-        var surface = isDark ? Color.FromRgb(0x33, 0x3A, 0x47) : Color.FromRgb(0xFF, 0xFF, 0xFF);
-        var textPri = isDark ? Color.FromRgb(0xE2, 0xE6, 0xEC) : Color.FromRgb(0x2A, 0x30, 0x3B);
-        var accent  = isDark ? Color.FromRgb(0x6E, 0x9B, 0xD9) : Color.FromRgb(0x3F, 0x6F, 0xB7);
-        var acSoft  = isDark ? Color.FromRgb(0x1A, 0x28, 0x40) : Color.FromRgb(0xE9, 0xF0, 0xF9);
-        var textSec = isDark ? Color.FromRgb(0x9A, 0xA3, 0xB2) : Color.FromRgb(0x4A, 0x52, 0x60);
+        var surface    = isDark ? Color.FromRgb(0x33, 0x3A, 0x47) : Color.FromRgb(0xFF, 0xFF, 0xFF);
+        var textPri    = isDark ? Color.FromRgb(0xE2, 0xE6, 0xEC) : Color.FromRgb(0x2A, 0x30, 0x3B);
+        var accent     = isDark ? Color.FromRgb(0x6E, 0x9B, 0xD9) : Color.FromRgb(0x3F, 0x6F, 0xB7);
+        var acSoft     = isDark ? Color.FromRgb(0x1A, 0x28, 0x40) : Color.FromRgb(0xE9, 0xF0, 0xF9);
+        var textSec    = isDark ? Color.FromRgb(0x9A, 0xA3, 0xB2) : Color.FromRgb(0x4A, 0x52, 0x60);
+        var fgOnAccent = Color.FromRgb(0xFF, 0xFF, 0xFF); // 常に白
 
-        static void SetSysBrush(ResourceDictionary res, object key, Color color)
+        static SolidColorBrush Frozen(Color c)
         {
-            if (res[key] is SolidColorBrush brush && !brush.IsFrozen)
-                brush.Color = color;
+            var b = new SolidColorBrush(c);
+            b.Freeze();
+            return b;
         }
 
-        SetSysBrush(res, SystemColors.WindowBrushKey,                          surface);
-        SetSysBrush(res, SystemColors.WindowTextBrushKey,                      textPri);
-        SetSysBrush(res, SystemColors.ControlBrushKey,                         surface);
-        SetSysBrush(res, SystemColors.ControlTextBrushKey,                     textPri);
-        SetSysBrush(res, SystemColors.HighlightBrushKey,                       accent);
-        SetSysBrush(res, SystemColors.InactiveSelectionHighlightBrushKey,      acSoft);
-        SetSysBrush(res, SystemColors.InactiveSelectionHighlightTextBrushKey,  textSec);
+        res[SystemColors.WindowBrushKey]                         = Frozen(surface);
+        res[SystemColors.WindowTextBrushKey]                     = Frozen(textPri);
+        res[SystemColors.ControlBrushKey]                        = Frozen(surface);
+        res[SystemColors.ControlTextBrushKey]                    = Frozen(textPri);
+        res[SystemColors.HighlightBrushKey]                      = Frozen(accent);
+        res[SystemColors.HighlightTextBrushKey]                  = Frozen(fgOnAccent);
+        res[SystemColors.InactiveSelectionHighlightBrushKey]     = Frozen(acSoft);
+        res[SystemColors.InactiveSelectionHighlightTextBrushKey] = Frozen(textSec);
     }
 
     protected override void OnStartup(StartupEventArgs e)
@@ -108,8 +113,6 @@ public partial class App : Application
         {
             if (args.ExceptionObject is Exception ex && IsPluginShutdownError(ex))
                 return; // 既知のシャットダウンエラーは無視
-
-            // それ以外は通常のクラッシュログとして扱う（ダイアログは出さない）
         };
     }
 

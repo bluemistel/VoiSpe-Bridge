@@ -8,23 +8,23 @@
         Icon="pack://application:,,,/resource/appicon.png"
         Width="920" Height="680"
         MinWidth="720" MinHeight="520"
-        Background="{StaticResource BackgroundBrush}"
+        Background="{DynamicResource BackgroundBrush}"
         WindowStartupLocation="CenterScreen">
 
   <Window.Resources>
     <Style x:Key="Label" TargetType="TextBlock">
-      <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+      <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
       <Setter Property="FontSize" Value="11"/>
       <Setter Property="Margin" Value="0,0,0,3"/>
     </Style>
     <Style x:Key="Card" TargetType="Border">
-      <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+      <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
       <Setter Property="CornerRadius" Value="8"/>
       <Setter Property="Padding" Value="14"/>
       <Setter Property="Margin" Value="0,0,0,10"/>
     </Style>
     <Style x:Key="SliderValue" TargetType="TextBlock">
-      <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+      <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
       <Setter Property="FontSize" Value="12"/>
       <Setter Property="Width" Value="40"/>
       <Setter Property="TextAlignment" Value="Right"/>
@@ -33,14 +33,14 @@
       <Setter Property="Height" Value="6"/>
       <Setter Property="Minimum" Value="0"/>
       <Setter Property="Maximum" Value="1"/>
-      <Setter Property="Foreground" Value="{StaticResource SuccessBrush}"/>
-      <Setter Property="Background" Value="{StaticResource BorderBrush}"/>
+      <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}"/>
+      <Setter Property="Background" Value="{DynamicResource BorderBrush}"/>
       <Setter Property="BorderThickness" Value="0"/>
     </Style>
     <!-- ヘッダー内の小ボタン -->
     <Style x:Key="HeaderIconButton" TargetType="Button">
       <Setter Property="Background" Value="Transparent"/>
-      <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+      <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
       <Setter Property="BorderThickness" Value="0"/>
       <Setter Property="Cursor" Value="Hand"/>
       <Setter Property="Padding" Value="6,4"/>
@@ -55,8 +55,8 @@
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background" Value="{StaticResource BorderBrush}"/>
-                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                <Setter Property="Background" Value="{DynamicResource BorderBrush}"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
               </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
@@ -65,9 +65,9 @@
     </Style>
     <!-- ヘッダー内のプラグイン情報ボタン -->
     <Style x:Key="HeaderPluginButton" TargetType="Button">
-      <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
-      <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
-      <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+      <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+      <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="Cursor" Value="Hand"/>
       <Setter Property="Padding" Value="10,5"/>
@@ -84,7 +84,7 @@
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background" Value="{StaticResource BorderBrush}"/>
+                <Setter Property="Background" Value="{DynamicResource BorderBrush}"/>
               </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
@@ -107,7 +107,7 @@
 
     <!-- ===== ヘッダーバー（全幅） ===== -->
     <Border Grid.Row="0" Grid.ColumnSpan="3"
-            Background="{StaticResource SurfaceBrush}"
+            Background="{DynamicResource SurfaceBrush}"
             CornerRadius="8" Padding="12,8">
       <Grid>
         <Grid.ColumnDefinitions>
@@ -122,14 +122,14 @@
         <TextBlock Grid.Column="0"
                    Text="VoiSpe-Bridge"
                    FontSize="13" FontWeight="SemiBold"
-                   Foreground="{StaticResource AccentBrush}"
+                   Foreground="{DynamicResource AccentBrush}"
                    VerticalAlignment="Center"/>
 
         <!-- プラグイン・音声パラメータ設定ボタン -->
         <StackPanel Grid.Column="2" Orientation="Horizontal"
                     VerticalAlignment="Center">
           <TextBlock Text="{Binding PluginCastLabel}"
-                     Foreground="{StaticResource TextSecondaryBrush}"
+                     Foreground="{DynamicResource TextSecondaryBrush}"
                      FontSize="11" VerticalAlignment="Center"
                      Margin="0,0,6,0"/>
           <Button Content="{Binding ThemeToggleLabel}"
@@ -152,7 +152,7 @@
         <StackPanel Grid.Column="4" Orientation="Horizontal"
                     VerticalAlignment="Center">
           <TextBlock Text="辞書:"
-                     Foreground="{StaticResource TextSecondaryBrush}"
+                     Foreground="{DynamicResource TextSecondaryBrush}"
                      FontSize="11" VerticalAlignment="Center"
                      Margin="0,0,5,0"/>
           <ComboBox ItemsSource="{Binding DictionaryPresets}"
@@ -177,7 +177,7 @@
           <Button Content="✕"
                   Command="{Binding DeletePresetCommand}"
                   Style="{StaticResource HeaderIconButton}"
-                  Foreground="{StaticResource DangerBrush}"
+                  Foreground="{DynamicResource DangerBrush}"
                   ToolTip="選択中のプリセットを削除"/>
         </StackPanel>
       </Grid>
@@ -204,7 +204,7 @@
               <TextBlock Text="{Binding StatusText}"
                          FontSize="13" FontWeight="SemiBold"/>
               <TextBlock Text="モデル準備中... しばらくお待ちください"
-                         Foreground="{StaticResource TextSecondaryBrush}"
+                         Foreground="{DynamicResource TextSecondaryBrush}"
                          FontSize="11"
                          Visibility="{Binding IsModelLoading,
                            Converter={StaticResource BoolToVis}}"/>
@@ -237,7 +237,7 @@
             <TextBlock Grid.Column="2"
                        Text="{Binding AudioLevelDbText}"
                        FontSize="10"
-                       Foreground="{StaticResource TextSecondaryBrush}"
+                       Foreground="{DynamicResource TextSecondaryBrush}"
                        VerticalAlignment="Center"
                        TextAlignment="Right" Margin="4,0,0,0"/>
           </Grid>
@@ -249,7 +249,7 @@
         <StackPanel>
           <TextBlock Style="{StaticResource Label}"
                      Text="認識テキスト（クリックで再読み上げ）"/>
-          <Border Background="{StaticResource BackgroundBrush}"
+          <Border Background="{DynamicResource BackgroundBrush}"
                   CornerRadius="4" Padding="10,8" Cursor="Hand"
                   MinHeight="44">
             <Border.InputBindings>
@@ -281,7 +281,7 @@
             </Grid.ColumnDefinitions>
             <TextBox Grid.Column="0"
                      Text="{Binding ManualInput, UpdateSourceTrigger=PropertyChanged}"
-                     Background="{StaticResource BackgroundBrush}">
+                     Background="{DynamicResource BackgroundBrush}">
               <TextBox.InputBindings>
                 <KeyBinding Key="Return"
                             Command="{Binding SpeakTextCommand}"
@@ -306,13 +306,13 @@
                       Command="{Binding ClearHistoryCommand}"
                       Padding="8,2" FontSize="11"
                       Background="Transparent"
-                      Foreground="{StaticResource TextSecondaryBrush}"
+                      Foreground="{DynamicResource TextSecondaryBrush}"
                       BorderThickness="0" Cursor="Hand"/>
             </Grid>
             <ListBox Grid.Row="1"
                      ItemsSource="{Binding History}"
-                     Background="{StaticResource BackgroundBrush}"
-                     BorderBrush="{StaticResource BorderBrush}"
+                     Background="{DynamicResource BackgroundBrush}"
+                     BorderBrush="{DynamicResource BorderBrush}"
                      BorderThickness="1">
               <ListBox.ItemTemplate>
                 <DataTemplate>
@@ -322,7 +322,7 @@
                       <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="{Binding DisplayTime}"
-                               Foreground="{StaticResource TextSecondaryBrush}"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
                                FontSize="11"/>
                     <TextBlock Grid.Column="1" Text="{Binding Text}"
                                TextWrapping="Wrap" FontSize="13"/>
@@ -358,11 +358,11 @@
               </ComboBox.ItemTemplate>
             </ComboBox>
             <!-- ブラウザ音声認識の説明（Browser エンジン選択時のみ表示） -->
-            <Border Background="{StaticResource BackgroundBrush}"
+            <Border Background="{DynamicResource BackgroundBrush}"
                     CornerRadius="4" Padding="8"
                     Margin="0,4,0,8"
                     Visibility="{Binding IsBrowserEngine, Converter={StaticResource BoolToVis}}">
-              <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
+              <TextBlock Foreground="{DynamicResource TextSecondaryBrush}"
                          FontSize="10" TextWrapping="Wrap">
                 ● Google の音声認識サーバーで処理されます（音声データが送信されます）&#x0a;
                 ● GPU を使用しないためゲーム配信中の負荷を大幅に軽減できます&#x0a;
@@ -372,11 +372,11 @@
             </Border>
 
             <!-- ReazonSpeech の説明（ReazonSpeech エンジン選択時のみ表示） -->
-            <Border Background="{StaticResource BackgroundBrush}"
+            <Border Background="{DynamicResource BackgroundBrush}"
                     CornerRadius="4" Padding="8"
                     Margin="0,4,0,8"
                     Visibility="{Binding IsReazonSpeechEngine, Converter={StaticResource BoolToVis}}">
-              <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
+              <TextBlock Foreground="{DynamicResource TextSecondaryBrush}"
                          FontSize="10" TextWrapping="Wrap">
                 ● 日本語特化ローカル実行エンジン（GPU 不要・完全オフライン）&#x0a;
                 ● ReazonSpeech データセットで訓練された高精度日本語モデル&#x0a;
@@ -398,18 +398,18 @@
                   </DataTemplate>
                 </ComboBox.ItemTemplate>
               </ComboBox>
-              <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
+              <TextBlock Foreground="{DynamicResource TextSecondaryBrush}"
                          FontSize="10" TextWrapping="Wrap" Margin="0,0,0,8">
                 ゲーム中は Large v3 Turbo または Base を推奨。初回は自動ダウンロード。
                 変更するとモデルが再読み込みされます。
               </TextBlock>
 
               <CheckBox IsChecked="{Binding UseGpu}"
-                        Foreground="{StaticResource TextPrimaryBrush}"
+                        Foreground="{DynamicResource TextPrimaryBrush}"
                         Margin="0,0,0,2">
                 <TextBlock Text="GPU アクセラレーション（推奨）" FontSize="12"/>
               </CheckBox>
-              <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
+              <TextBlock Foreground="{DynamicResource TextSecondaryBrush}"
                          FontSize="10" TextWrapping="Wrap" Margin="0,0,0,10">
                 NVIDIA: CUDA、AMD/Intel: Vulkan を自動選択。
                 変更するとモデルが再読み込みされます。
@@ -437,14 +437,14 @@
                   <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="-50" FontSize="10"
-                           Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                           Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
                 <Slider Grid.Column="1" Minimum="-50" Maximum="0"
                         Value="{Binding VoiceTriggerDb}"
                         TickFrequency="1" IsSnapToTickEnabled="True" Margin="4,0"/>
                 <TextBlock Grid.Column="2" Text="0" FontSize="10"
-                           Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                           Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
               </Grid>
-              <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
+              <TextBlock Foreground="{DynamicResource TextSecondaryBrush}"
                          FontSize="10" TextWrapping="Wrap" Margin="0,0,0,8">
                 この音量を超えると発話開始とみなします。
                 BGM 等がある場合は高め (-15〜-10 dB) に。
@@ -467,14 +467,14 @@
                   <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="-60" FontSize="10"
-                           Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                           Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
                 <Slider Grid.Column="1" Minimum="-60" Maximum="-10"
                         Value="{Binding NoiseGateDb}"
                         TickFrequency="1" IsSnapToTickEnabled="True" Margin="4,0"/>
                 <TextBlock Grid.Column="2" Text="-10" FontSize="10"
-                           Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                           Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
               </Grid>
-              <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
+              <TextBlock Foreground="{DynamicResource TextSecondaryBrush}"
                          FontSize="10" TextWrapping="Wrap" Margin="0,0,0,10">
                 発話検出レベルより低く設定してください
                 （目安: 検出レベル − 10〜20 dB）。
@@ -494,7 +494,7 @@
                       Value="{Binding SilenceDurationMs}"
                       TickFrequency="10" IsSnapToTickEnabled="True"
                       Margin="0,0,0,4"/>
-              <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
+              <TextBlock Foreground="{DynamicResource TextSecondaryBrush}"
                          FontSize="10" TextWrapping="Wrap" Margin="0,0,0,10">
                 発話後この時間無音が続くと自動で確定・読み上げします。
               </TextBlock>
@@ -513,7 +513,7 @@
                       Value="{Binding MinActiveSpeechMs}"
                       TickFrequency="50" IsSnapToTickEnabled="True"
                       Margin="0,0,0,4"/>
-              <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
+              <TextBlock Foreground="{DynamicResource TextSecondaryBrush}"
                          FontSize="10" TextWrapping="Wrap" Margin="0,0,0,10">
                 擦れ音など瞬間的なノイズを除外します。推奨: 150〜300ms。
               </TextBlock>
@@ -532,7 +532,7 @@
                       Value="{Binding MinRecognizedTextLength}"
                       TickFrequency="1" IsSnapToTickEnabled="True"
                       Margin="0,0,0,4"/>
-              <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
+              <TextBlock Foreground="{DynamicResource TextSecondaryBrush}"
                          FontSize="10" TextWrapping="Wrap">
                 この文字数未満の認識結果を破棄します。「え」など1文字誤検出を除くには 2 に設定。
               </TextBlock>
@@ -603,7 +603,7 @@
                 <TextBlock Style="{StaticResource Label}" Text="文字色"/>
                 <Button Height="30"
                         Click="OnPickFontColor"
-                        BorderBrush="{StaticResource BorderBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="1"
                         Padding="4,0"
                         Cursor="Hand"
@@ -634,7 +634,7 @@
                 <TextBlock Style="{StaticResource Label}" Text="縁取り色"/>
                 <Button Height="30"
                         Click="OnPickStrokeColor"
-                        BorderBrush="{StaticResource BorderBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="1"
                         Padding="4,0"
                         Cursor="Hand"
@@ -661,7 +661,7 @@
               </StackPanel>
             </Grid>
 
-            <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
+            <TextBlock Foreground="{DynamicResource TextSecondaryBrush}"
                        FontSize="10" TextWrapping="Wrap" Margin="0,8,0,0">
               OBS：ウィンドウキャプチャ →「VoiSpe-Bridge - 配信用字幕」→
               フィルタ →「クロマキー」→ 緑 (#00FF00) を設定してください。
@@ -671,7 +671,7 @@
         </Border>
 
         <TextBlock Text="VoiSpe-Bridge v1.0"
-                   Foreground="{StaticResource TextSecondaryBrush}"
+                   Foreground="{DynamicResource TextSecondaryBrush}"
                    FontSize="11" HorizontalAlignment="Center" Margin="0,4"/>
       </StackPanel>
     </ScrollViewer>

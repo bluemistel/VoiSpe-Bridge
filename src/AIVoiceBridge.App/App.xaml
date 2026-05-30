@@ -1,4 +1,4 @@
-﻿<Application x:Class="VoiSpeBridge.App.App"
+<Application x:Class="VoiSpeBridge.App.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:conv="clr-namespace:VoiSpeBridge.App.Converters"
@@ -18,52 +18,46 @@
            カラーパレット — VoiSpe-Bridge デザインシステム
            ライトモード基定（落ち着いた温かみのあるグレー地＋スチールブルー）
            ダークモード: #2A303B 地 / #333A47 surface / #6E9BD9 accent
+           SetTheme(isDark) で Application.Resources のブラシを置き換える。
+           すべてのブラシ参照は DynamicResource を使用し、置き換えに自動追随する。
            ══════════════════════════════════════════════════════════ -->
 
-      <!-- ライトモード基本色（デザインシステム CSS トークン対応） -->
-      <!-- bg: #F1F2F5 暖かみのある薄グレー（純白でなく長時間作業向け）-->
+      <!-- ライトモード基本色（初期値。テーマ切替は SetTheme() で行う） -->
       <Color x:Key="BackgroundColor">#F1F2F5</Color>
-      <!-- surface: #FFFFFF カード面（bg から一段浮かせる）-->
       <Color x:Key="SurfaceColor">#FFFFFF</Color>
-      <!-- surface-2: #F6F7FA 入力フィールド地 / ホバー地 -->
       <Color x:Key="Surface2Color">#F6F7FA</Color>
-      <!-- accent: #3F6FB7 スチールブルー（Audacity / Reaper 系の業務感）-->
       <Color x:Key="AccentColor">#3F6FB7</Color>
-      <!-- accent-hover: #345D9C -->
       <Color x:Key="AccentHoverColor">#345D9C</Color>
-      <!-- accent-soft: #E9F0F9 選択ハイライト薄地 -->
       <Color x:Key="AccentSoftColor">#E9F0F9</Color>
-      <!-- fg-1: #2A303B 主テキスト -->
       <Color x:Key="TextPrimaryColor">#2A303B</Color>
-      <!-- fg-2: #4A5260 補助テキスト（ラベル / ヘルプ）-->
       <Color x:Key="TextSecondaryColor">#4A5260</Color>
-      <!-- fg-on-accent: #FFFFFF アクセント地上のテキスト（ボタン / 選択項目）-->
       <Color x:Key="FgOnAccentColor">#FFFFFF</Color>
-      <!-- success: #3D9A6B -->
       <Color x:Key="SuccessColor">#3D9A6B</Color>
-      <!-- danger: #D26060 -->
       <Color x:Key="DangerColor">#D26060</Color>
-      <!-- border: #E2E5EC カード罫線 -->
       <Color x:Key="BorderColor">#E2E5EC</Color>
 
-      <SolidColorBrush x:Key="BackgroundBrush"   Color="{StaticResource BackgroundColor}"/>
-      <SolidColorBrush x:Key="SurfaceBrush"      Color="{StaticResource SurfaceColor}"/>
-      <SolidColorBrush x:Key="Surface2Brush"     Color="{StaticResource Surface2Color}"/>
-      <SolidColorBrush x:Key="AccentBrush"       Color="{StaticResource AccentColor}"/>
-      <SolidColorBrush x:Key="AccentHoverBrush"  Color="{StaticResource AccentHoverColor}"/>
-      <SolidColorBrush x:Key="AccentSoftBrush"   Color="{StaticResource AccentSoftColor}"/>
-      <SolidColorBrush x:Key="TextPrimaryBrush"  Color="{StaticResource TextPrimaryColor}"/>
+      <!--
+        ブラシ定義（初期値はライトモード）。
+        SetTheme() で res[key] を新しい SolidColorBrush に置き換えるため
+        参照側はすべて DynamicResource を使用すること。
+      -->
+      <SolidColorBrush x:Key="BackgroundBrush"    Color="{StaticResource BackgroundColor}"/>
+      <SolidColorBrush x:Key="SurfaceBrush"       Color="{StaticResource SurfaceColor}"/>
+      <SolidColorBrush x:Key="Surface2Brush"      Color="{StaticResource Surface2Color}"/>
+      <SolidColorBrush x:Key="AccentBrush"        Color="{StaticResource AccentColor}"/>
+      <SolidColorBrush x:Key="AccentHoverBrush"   Color="{StaticResource AccentHoverColor}"/>
+      <SolidColorBrush x:Key="AccentSoftBrush"    Color="{StaticResource AccentSoftColor}"/>
+      <SolidColorBrush x:Key="TextPrimaryBrush"   Color="{StaticResource TextPrimaryColor}"/>
       <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}"/>
-      <SolidColorBrush x:Key="FgOnAccentBrush"   Color="{StaticResource FgOnAccentColor}"/>
-      <SolidColorBrush x:Key="SuccessBrush"      Color="{StaticResource SuccessColor}"/>
-      <SolidColorBrush x:Key="DangerBrush"       Color="{StaticResource DangerColor}"/>
-      <SolidColorBrush x:Key="BorderBrush"       Color="{StaticResource BorderColor}"/>
+      <SolidColorBrush x:Key="FgOnAccentBrush"    Color="{StaticResource FgOnAccentColor}"/>
+      <SolidColorBrush x:Key="SuccessBrush"       Color="{StaticResource SuccessColor}"/>
+      <SolidColorBrush x:Key="DangerBrush"        Color="{StaticResource DangerColor}"/>
+      <SolidColorBrush x:Key="BorderBrush"        Color="{StaticResource BorderColor}"/>
 
       <!--
-        WPF システムカラーの上書き（ライトモード対応）
-        ComboBox / ListBox ポップアップ・選択ハイライトなどが
-        デザインシステムの色に沿うよう上書きする。
-        HighlightTextBrushKey は白固定（アクセント地上で読めるよう）。
+        WPF システムカラーの上書き（ライトモード初期値）。
+        ComboBox / ListBox ポップアップ・選択ハイライトなどを
+        デザインシステムの色に合わせる。SetTheme() で同様に置き換えられる。
       -->
       <SolidColorBrush x:Key="{x:Static SystemColors.WindowBrushKey}"
                        Color="{StaticResource SurfaceColor}"/>
@@ -82,37 +76,51 @@
       <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}"
                        Color="{StaticResource TextSecondaryColor}"/>
 
-      <!-- ボタンスタイル -->
+      <!-- ══════════════════════════════════════════════════════════
+           ボタンスタイル
+           ══════════════════════════════════════════════════════════ -->
+
+      <!--
+        PrimaryButton
+        ─────────────────────────────────────────────────────────────
+        【重要】ContentPresenter で文字列コンテンツを表示する場合、
+        ContentPresenter が内部生成する TextBlock は ControlTemplate のリソーススコープ外に
+        作られるため ControlTemplate.Resources の暗黙スタイルが適用されない。
+        グローバル TextBlock スタイル（Foreground=TextPrimaryBrush）が勝ってしまい
+        ボタン文字が黒になる問題を防ぐため、ContentPresenter の代わりに
+        Foreground をローカル値（DynamicResource）で直接指定した TextBlock を使用する。
+        ローカル値はスタイルセッターより優先順位が高いため確実に白文字になる。
+      -->
       <Style x:Key="PrimaryButton" TargetType="Button">
-        <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource FgOnAccentBrush}"/>
+        <Setter Property="Background"   Value="{DynamicResource AccentBrush}"/>
+        <Setter Property="Foreground"   Value="{DynamicResource FgOnAccentBrush}"/>
         <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="Padding" Value="16,8"/>
-        <Setter Property="FontSize" Value="14"/>
-        <Setter Property="FontWeight" Value="SemiBold"/>
-        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Padding"      Value="16,8"/>
+        <Setter Property="FontSize"     Value="14"/>
+        <Setter Property="FontWeight"   Value="SemiBold"/>
+        <Setter Property="Cursor"       Value="Hand"/>
         <Setter Property="Template">
           <Setter.Value>
             <ControlTemplate TargetType="Button">
-              <ControlTemplate.Resources>
-                <!--
-                  グローバル TextBlock スタイル（Foreground = TextPrimaryBrush）が
-                  ボタン内部のテキストにも適用されて文字が黒くなる問題の修正。
-                  ControlTemplate 内でスタイルをリセットし、ボタンの Foreground を継承させる。
-                -->
-                <Style TargetType="TextBlock" BasedOn="{x:Null}">
-                  <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
-                  <Setter Property="FontFamily" Value="Yu Gothic UI, Segoe UI"/>
-                </Style>
-              </ControlTemplate.Resources>
               <Border Background="{TemplateBinding Background}"
                       CornerRadius="6"
                       Padding="{TemplateBinding Padding}">
-                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <!--
+                  TextBlock を直接配置し Foreground をローカル値で指定することで、
+                  グローバル TextBlock スタイルのセッター（TextPrimaryBrush）に
+                  上書きされるのを防ぐ。
+                -->
+                <TextBlock Text="{TemplateBinding Content}"
+                           Foreground="{DynamicResource FgOnAccentBrush}"
+                           FontSize="{TemplateBinding FontSize}"
+                           FontWeight="{TemplateBinding FontWeight}"
+                           FontFamily="Yu Gothic UI, Segoe UI"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"/>
               </Border>
               <ControlTemplate.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                  <Setter Property="Background" Value="{StaticResource AccentHoverBrush}"/>
+                  <Setter Property="Background" Value="{DynamicResource AccentHoverBrush}"/>
                 </Trigger>
                 <Trigger Property="IsEnabled" Value="False">
                   <Setter Property="Opacity" Value="0.5"/>
@@ -124,23 +132,20 @@
       </Style>
 
       <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
-        <Setter Property="Background" Value="{StaticResource DangerBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource DangerBrush}"/>
       </Style>
 
+      <!-- ══════════════════════════════════════════════════════════
+           ComboBox カスタム ControlTemplate
+           ══════════════════════════════════════════════════════════ -->
       <!--
-        ComboBox カスタム ControlTemplate
-        【背景】
-          WPF 標準テンプレートは Aero2 テーマのハードコード色を使うため
-          SystemColors やスタイルセッターが効かない。
-          ControlTemplate を完全に置き換えることで SurfaceBrush / BorderBrush を確実に適用する。
-        【ライトモード留意点】
-          グローバル TextBlock スタイルの Foreground は TextPrimaryBrush（暗色）なので
-          選択エリア（SurfaceBrush = 白地）上でそのまま読める。
+        WPF 標準テンプレートは Aero2 テーマのハードコード色を使うため
+        ControlTemplate を完全に置き換えることで DynamicResource ブラシを確実に適用する。
       -->
       <Style TargetType="ComboBox">
-        <Setter Property="Background"    Value="{StaticResource SurfaceBrush}"/>
-        <Setter Property="Foreground"    Value="{StaticResource TextPrimaryBrush}"/>
-        <Setter Property="BorderBrush"   Value="{StaticResource BorderBrush}"/>
+        <Setter Property="Background"    Value="{DynamicResource SurfaceBrush}"/>
+        <Setter Property="Foreground"    Value="{DynamicResource TextPrimaryBrush}"/>
+        <Setter Property="BorderBrush"   Value="{DynamicResource BorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding"       Value="8,4"/>
         <Setter Property="FontSize"      Value="13"/>
@@ -149,25 +154,17 @@
         <Setter Property="ScrollViewer.VerticalScrollBarVisibility"   Value="Auto"/>
         <Setter Property="Template">
           <Setter.Value>
-            <!--
-              【修正ポイント】Popup のコンテンツ内では TemplateBinding / RelativeSource=TemplatedParent
-              が WPF の制限により機能しない（サイレントエラーでテンプレート全体が無効化される）。
-              Popup の幅は root Grid を ElementName 参照で取得する。
-            -->
             <ControlTemplate TargetType="ComboBox">
-              <!-- x:Name="root" を付けて Popup 内から ElementName でアクセス -->
               <Grid x:Name="root">
-                <!-- ヘッダー部分：選択済みアイテム + 矢印 + クリック領域 -->
                 <Border x:Name="Border"
-                        Background="{StaticResource SurfaceBrush}"
-                        BorderBrush="{StaticResource BorderBrush}"
+                        Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="1">
                   <Grid>
                     <Grid.ColumnDefinitions>
                       <ColumnDefinition Width="*"/>
                       <ColumnDefinition Width="20"/>
                     </Grid.ColumnDefinitions>
-                    <!-- 選択アイテム表示 -->
                     <ContentPresenter
                         x:Name="ContentSite"
                         Grid.Column="0"
@@ -177,14 +174,12 @@
                         Margin="{TemplateBinding Padding}"
                         VerticalAlignment="Center"
                         IsHitTestVisible="False"/>
-                    <!-- 開閉矢印 -->
                     <Path x:Name="Arrow"
                           Grid.Column="1"
-                          Fill="{StaticResource TextSecondaryBrush}"
+                          Fill="{DynamicResource TextSecondaryBrush}"
                           VerticalAlignment="Center"
                           HorizontalAlignment="Center"
                           Data="M 0 0 L 4 4 L 8 0 Z"/>
-                    <!-- 透明クリック領域（ToggleButton） -->
                     <ToggleButton Grid.ColumnSpan="2"
                                   Focusable="False"
                                   ClickMode="Press"
@@ -198,19 +193,14 @@
                     </ToggleButton>
                   </Grid>
                 </Border>
-                <!--
-                  ドロップダウンポップアップ。
-                  Popup 内では TemplateBinding / RelativeSource=TemplatedParent が使えないため
-                  MinWidth は ElementName=root で取得し、MaxHeight は固定値とする。
-                -->
                 <Popup x:Name="PART_Popup"
                        AllowsTransparency="True"
                        IsOpen="{TemplateBinding IsDropDownOpen}"
                        Placement="Bottom"
                        Focusable="False"
                        PopupAnimation="Slide">
-                  <Border Background="{StaticResource SurfaceBrush}"
-                          BorderBrush="{StaticResource BorderBrush}"
+                  <Border Background="{DynamicResource SurfaceBrush}"
+                          BorderBrush="{DynamicResource BorderBrush}"
                           BorderThickness="1"
                           MinWidth="{Binding ActualWidth, ElementName=root}"
                           MaxHeight="400">
@@ -226,11 +216,11 @@
                 </Trigger>
                 <Trigger Property="IsMouseOver" Value="True">
                   <Setter TargetName="Border" Property="BorderBrush"
-                          Value="{StaticResource AccentBrush}"/>
+                          Value="{DynamicResource AccentBrush}"/>
                 </Trigger>
                 <Trigger Property="IsDropDownOpen" Value="True">
                   <Setter TargetName="Border" Property="BorderBrush"
-                          Value="{StaticResource AccentBrush}"/>
+                          Value="{DynamicResource AccentBrush}"/>
                 </Trigger>
               </ControlTemplate.Triggers>
             </ControlTemplate>
@@ -238,110 +228,101 @@
         </Setter>
       </Style>
 
-      <!-- ContextMenu / MenuItem スタイル（白背景＋黒文字） -->
+      <!-- ContextMenu / MenuItem スタイル -->
       <Style TargetType="ContextMenu">
-        <Setter Property="Background"   Value="{StaticResource SurfaceBrush}"/>
-        <Setter Property="BorderBrush"  Value="{StaticResource BorderBrush}"/>
+        <Setter Property="Background"      Value="{DynamicResource SurfaceBrush}"/>
+        <Setter Property="BorderBrush"     Value="{DynamicResource BorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
       </Style>
 
       <Style TargetType="MenuItem">
-        <!--
-          ライトモードでは TextPrimaryBrush が暗色のため、内側 TextBlock スタイルの
-          リセット（BasedOn="{x:Null}"）は引き続き必要（グローバル Style との競合防止）。
-          ハイライト時はアクセント地上で読めるよう FgOnAccentBrush（白）を使う。
-        -->
         <Style.Resources>
           <Style TargetType="TextBlock" BasedOn="{x:Null}">
-            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
             <Setter Property="FontFamily" Value="Yu Gothic UI, Segoe UI"/>
             <Setter Property="FontSize"   Value="13"/>
           </Style>
         </Style.Resources>
-        <Setter Property="Background"  Value="{StaticResource SurfaceBrush}"/>
-        <Setter Property="Foreground"  Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="Background"  Value="{DynamicResource SurfaceBrush}"/>
+        <Setter Property="Foreground"  Value="{DynamicResource TextPrimaryBrush}"/>
         <Setter Property="FontFamily"  Value="Yu Gothic UI, Segoe UI"/>
         <Setter Property="FontSize"    Value="13"/>
         <Style.Triggers>
           <Trigger Property="IsHighlighted" Value="True">
-            <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
-            <Setter Property="Foreground" Value="{StaticResource FgOnAccentBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource FgOnAccentBrush}"/>
           </Trigger>
         </Style.Triggers>
       </Style>
 
-      <!-- Sliderスタイル -->
+      <!-- Slider スタイル -->
       <Style TargetType="Slider">
-        <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
       </Style>
 
-      <!-- TextBlockスタイル -->
+      <!-- TextBlock スタイル（グローバル） -->
       <Style TargetType="TextBlock">
-        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
         <Setter Property="FontFamily" Value="Yu Gothic UI, Segoe UI"/>
       </Style>
 
-      <!-- TextBoxスタイル -->
+      <!-- TextBox スタイル -->
       <Style TargetType="TextBox">
-        <Setter Property="Background"      Value="{StaticResource Surface2Brush}"/>
-        <Setter Property="Foreground"      Value="{StaticResource TextPrimaryBrush}"/>
-        <Setter Property="CaretBrush"      Value="{StaticResource TextPrimaryBrush}"/>
-        <Setter Property="BorderBrush"     Value="{StaticResource BorderBrush}"/>
+        <Setter Property="Background"      Value="{DynamicResource Surface2Brush}"/>
+        <Setter Property="Foreground"      Value="{DynamicResource TextPrimaryBrush}"/>
+        <Setter Property="CaretBrush"      Value="{DynamicResource TextPrimaryBrush}"/>
+        <Setter Property="BorderBrush"     Value="{DynamicResource BorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding"         Value="8,6"/>
         <Setter Property="FontFamily"      Value="Yu Gothic UI, Segoe UI"/>
         <Setter Property="FontSize"        Value="13"/>
-        <Setter Property="SelectionBrush"  Value="{StaticResource AccentBrush}"/>
+        <Setter Property="SelectionBrush"  Value="{DynamicResource AccentBrush}"/>
       </Style>
 
-      <!-- PasswordBoxスタイル（TextBox と共通のルック）-->
+      <!-- PasswordBox スタイル（TextBox と共通のルック） -->
       <Style TargetType="PasswordBox">
-        <Setter Property="Background"      Value="{StaticResource Surface2Brush}"/>
-        <Setter Property="Foreground"      Value="{StaticResource TextPrimaryBrush}"/>
-        <Setter Property="CaretBrush"      Value="{StaticResource TextPrimaryBrush}"/>
-        <Setter Property="BorderBrush"     Value="{StaticResource BorderBrush}"/>
+        <Setter Property="Background"      Value="{DynamicResource Surface2Brush}"/>
+        <Setter Property="Foreground"      Value="{DynamicResource TextPrimaryBrush}"/>
+        <Setter Property="CaretBrush"      Value="{DynamicResource TextPrimaryBrush}"/>
+        <Setter Property="BorderBrush"     Value="{DynamicResource BorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding"         Value="8,6"/>
         <Setter Property="FontFamily"      Value="Yu Gothic UI, Segoe UI"/>
         <Setter Property="FontSize"        Value="13"/>
-        <Setter Property="SelectionBrush"  Value="{StaticResource AccentBrush}"/>
+        <Setter Property="SelectionBrush"  Value="{DynamicResource AccentBrush}"/>
       </Style>
 
       <!-- ComboBoxItem（ドロップダウン項目）スタイル -->
       <Style TargetType="ComboBoxItem">
-        <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
-        <Setter Property="Padding" Value="8,5"/>
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+        <Setter Property="Padding"    Value="8,5"/>
         <Setter Property="FontFamily" Value="Yu Gothic UI, Segoe UI"/>
-        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="FontSize"   Value="13"/>
         <Style.Triggers>
-          <!-- ホバー: surface-2 地（薄グレー）、テキストはそのまま -->
           <Trigger Property="IsHighlighted" Value="True">
-            <Setter Property="Background" Value="{StaticResource Surface2Brush}"/>
-            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource Surface2Brush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
           </Trigger>
-          <!-- 選択: accent-soft 地（薄ブルー）、テキストはアクセント色 -->
           <Trigger Property="IsSelected" Value="True">
-            <Setter Property="Background" Value="{StaticResource AccentSoftBrush}"/>
-            <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource AccentSoftBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
           </Trigger>
         </Style.Triggers>
       </Style>
 
-      <!-- ListBoxItemスタイル（全体適用） -->
+      <!-- ListBoxItem スタイル（全体適用） -->
       <Style TargetType="ListBoxItem">
-        <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="Background"              Value="Transparent"/>
+        <Setter Property="Foreground"              Value="{DynamicResource TextPrimaryBrush}"/>
         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-        <Setter Property="Padding" Value="2"/>
+        <Setter Property="Padding"                 Value="2"/>
         <Style.Triggers>
-          <!-- ホバー: surface-2（薄グレー）で軽い浮き上がり感 -->
           <Trigger Property="IsMouseOver" Value="True">
-            <Setter Property="Background" Value="{StaticResource Surface2Brush}"/>
+            <Setter Property="Background" Value="{DynamicResource Surface2Brush}"/>
           </Trigger>
-          <!-- 選択: accent-soft（薄ブルー）で選択状態を明示 -->
           <Trigger Property="IsSelected" Value="True">
-            <Setter Property="Background" Value="{StaticResource AccentSoftBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource AccentSoftBrush}"/>
           </Trigger>
         </Style.Triggers>
       </Style>

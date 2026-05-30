@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Windows;
 using System.Windows.Media;
 using VoiSpeBridge.App.ViewModels;
@@ -39,7 +39,7 @@ public partial class MainWindow : Window
             _pluginSettingsWin.Show();
         };
 
-        // 驟堺ｿ｡逕ｨ蟄怜ｹ輔え繧｣繝ｳ繝峨え縺ｮ陦ｨ遉ｺ蛻・崛
+        // 配信用字幕ウィンドウの表示切替
         _vm.ShowSubtitleWindow = ToggleSubtitleWindow;
 
         Loaded += OnLoaded;
@@ -64,7 +64,7 @@ public partial class MainWindow : Window
         await _vm.InitializeRecognitionAsync();
     }
 
-    // 笏笏笏笏 驟堺ｿ｡逕ｨ蟄怜ｹ輔え繧｣繝ｳ繝峨え 笏笏笏笏
+    // ──── 配信用字幕ウィンドウ ────
 
     private void ToggleSubtitleWindow()
     {
@@ -81,7 +81,7 @@ public partial class MainWindow : Window
             _subtitleWin.Show();
     }
 
-    // 笏笏笏笏 繧ｫ繝ｩ繝ｼ繝斐ャ繧ｫ繝ｼ・・inForms ColorDialog・俄楳笏笏笏
+    // ──── カラーピッカー（WinForms ColorDialog）────
 
     private void OnPickFontColor(object sender, RoutedEventArgs e)
     {
@@ -113,16 +113,24 @@ public partial class MainWindow : Window
         }
     }
 
-    // 笏笏笏笏 繧ｯ繝ｪ繝ｼ繝ｳ繧｢繝・・ 笏笏笏笏
+    // ──── クリーンアップ ────
 
     protected override void OnClosed(System.EventArgs e)
     {
-        _subtitleWin?.Close();
-        _pluginSettingsWin?.Close();
-        _vm.Dispose();
-        base.OnClosed(e);
-        // whisper.cpp 縺ｮ OpenMP/CUDA 繧ｹ繝ｬ繝・ラ繝励・繝ｫ縺ｯ whisper_free() 蠕後ｂ谿句ｭ倥＠
-        // 繝励Ο繧ｻ繧ｹ繧堤函縺九＠邯壹￠繧九◆繧√［anaged 繧ｯ繝ｪ繝ｼ繝ｳ繧｢繝・・螳御ｺ・ｾ後↓蠑ｷ蛻ｶ邨ゆｺ・☆繧九・        Environment.Exit(0);
+        try
+        {
+            _subtitleWin?.Close();
+            _pluginSettingsWin?.Close();
+            _vm.Dispose();
+            base.OnClosed(e);
+        }
+        catch { }
+        finally
+        {
+            // whisper.cpp の OpenMP/CUDA スレッドプールや SherpaOnnx ネイティブスレッドは
+            // Dispose 後もプロセスを生かし続けることがあるため、マネージドクリーンアップ完了後
+            // に強制終了してプロセスが残り続けることを防ぐ。
+            Environment.Exit(0);
+        }
     }
 }
-

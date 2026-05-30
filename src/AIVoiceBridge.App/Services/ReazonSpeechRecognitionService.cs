@@ -90,6 +90,10 @@ public sealed class ReazonSpeechRecognitionService : IDisposable
     private readonly Queue<short[]> _preRollQueue   = new();
     private int                     _preRollSamples = 0;
 
+    // ---- 認識タスク（Dispose 時に待機して競合を防ぐ）----
+
+    private Task? _currentRecognizeTask;
+
     // ---- 状態 ----
 
     public bool IsListening  => _isListening;
@@ -359,7 +363,8 @@ public sealed class ReazonSpeechRecognitionService : IDisposable
         StatusChanged?.Invoke(this, "音声処理中...");
 
         // バックグラウンドで推論（NAudio コールバックをブロックしない）
-        _ = Task.Run(() => Recognize(samples));
+        // Dispose 時に待機できるよう Task を保持する
+        _currentRecognizeTask = Task.Run(() => Recognize(samples));
     }
 
     // ========== SherpaOnnx 推論 ==========
@@ -415,6 +420,12 @@ public sealed class ReazonSpeechRecognitionService : IDisposable
     public void Dispose()
     {
         StopListening();
+
+        // 進行中の推論タスクが完了するまで最大 5 秒待機する。
+        // SherpaOnnx ネイティブスレッドが Decode 中に _recognizer.Dispose() すると
+        // デッドロックや AV が発生し、プロセスが残り続ける原因になるため。
+        try { _currentRecognizeTask?.Wait(TimeSpan.FromSeconds(5)); } catch { }
+
         _recognizer?.Dispose();
         _waveIn?.Dispose();
     }

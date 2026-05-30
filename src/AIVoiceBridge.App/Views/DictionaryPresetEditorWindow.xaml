@@ -4,14 +4,14 @@
         Title="プリセット編集"
         Width="580" Height="540"
         MinWidth="480" MinHeight="400"
-        Background="{StaticResource BackgroundBrush}"
+        Background="{DynamicResource BackgroundBrush}"
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResizeWithGrip"
         ShowInTaskbar="False">
 
   <Window.Resources>
     <Style x:Key="Label" TargetType="TextBlock">
-      <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+      <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
       <Setter Property="FontSize" Value="11"/>
       <Setter Property="Margin" Value="0,0,0,3"/>
     </Style>
@@ -48,7 +48,7 @@
                TextWrapping="Wrap"
                VerticalScrollBarVisibility="Auto"
                FontSize="12"/>
-      <TextBlock Foreground="{StaticResource TextSecondaryBrush}" FontSize="10"
+      <TextBlock Foreground="{DynamicResource TextSecondaryBrush}" FontSize="10"
                  TextWrapping="Wrap" Margin="0,3,0,0">
         例: 「この配信では SynthesizerV、A.I.VOICE2 について話します。」
         プリセット切り替え後に認識を再起動すると反映されます。
@@ -74,19 +74,19 @@
                 CanUserDeleteRows="False"
                 HeadersVisibility="Column"
                 GridLinesVisibility="Horizontal"
-                RowBackground="{StaticResource SurfaceBrush}"
-                AlternatingRowBackground="{StaticResource BackgroundBrush}"
-                Foreground="{StaticResource TextPrimaryBrush}"
-                BorderBrush="{StaticResource BorderBrush}"
+                RowBackground="{DynamicResource SurfaceBrush}"
+                AlternatingRowBackground="{DynamicResource BackgroundBrush}"
+                Foreground="{DynamicResource TextPrimaryBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
-                HorizontalGridLinesBrush="{StaticResource BorderBrush}"
+                HorizontalGridLinesBrush="{DynamicResource BorderBrush}"
                 ColumnHeaderHeight="28"
                 RowHeight="30"
                 FontSize="12">
         <DataGrid.ColumnHeaderStyle>
           <Style TargetType="DataGridColumnHeader">
-            <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
-            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource BackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="Padding" Value="8,4"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -98,8 +98,8 @@
             <Setter Property="Padding" Value="6,4"/>
             <Style.Triggers>
               <Trigger Property="IsSelected" Value="True">
-                <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
-                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
               </Trigger>
             </Style.Triggers>
           </Style>
@@ -128,7 +128,7 @@
                 HorizontalAlignment="Right" Margin="0,14,0,0">
       <Button Content="キャンセル" Click="Cancel_Click"
               Style="{StaticResource SmallButton}"
-              Background="{StaticResource BorderBrush}"
+              Background="{DynamicResource BorderBrush}"
               Margin="0,0,8,0" MinWidth="90"/>
       <Button Content="OK" Click="OK_Click"
               Style="{StaticResource SmallButton}"

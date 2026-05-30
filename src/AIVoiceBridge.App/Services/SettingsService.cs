@@ -13,7 +13,7 @@ public sealed class AppSettings
     public int SilenceDurationMs { get; set; } = 800;
     public string SelectedModelName  { get; set; } = "LargeV3Turbo";
     /// <summary>音声認識エンジン名（"Whisper" または "Browser"）。</summary>
-    public string SelectedEngineName { get; set; } = "Whisper";
+    public string SelectedEngineName { get; set; } = "ReazonSpeech";
     public double Speed { get; set; } = 1.0;
     public double Volume { get; set; } = 1.0;
     public double Pitch { get; set; } = 1.0;
